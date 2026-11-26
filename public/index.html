@@ -1,174 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Bot Dashboard</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 500px; background: #1e293b; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-        h2 { text-align: center; color: #a78bfa; margin-bottom: 20px; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input[type="number"] { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 16px; outline: none; }
-        button.start-btn { background: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        button.start-btn:hover { background: #059669; }
-        button.start-btn:disabled { background: #64748b; cursor: not-allowed; }
-        .actions { display: flex; gap: 10px; margin-bottom: 15px; }
-        .actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
-        .btn-copy-all { background: #3b82f6; color: white; }
-        .btn-clear { background: #ef4444; color: white; }
-        
-        .email-list { display: flex; flex-direction: column; gap: 10px; max-height: 30vh; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
-        .email-item { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; }
-        .email-text { font-family: monospace; font-size: 14px; color: #cbd5e1; word-break: break-all; }
-        .btn-copy { background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.2s; }
-        .btn-copy:hover { background: #475569; }
-        
-        .status { text-align: center; font-size: 13px; color: #38bdf8; margin-bottom: 10px; min-height: 20px; }
-
-        /* লাইভ কনসোল স্টাইল */
-        .console-box { background: #000; color: #10b981; font-family: monospace; font-size: 12px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: auto; border: 1px solid #334155; display: flex; flex-direction: column; gap: 4px; }
-        .log-line { line-height: 1.4; word-wrap: break-word; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iVAS Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  *{box-sizing:border-box;font-family:system-ui,sans-serif}
+  body{margin:0;background:#0b1220;color:#e2e8f0;min-height:100vh}
+  header{padding:14px 22px;background:#111a2e;display:flex;gap:14px;align-items:center;border-bottom:1px solid #1f2937;position:sticky;top:0;z-index:10;flex-wrap:wrap}
+  header h1{margin:0;font-size:17px}
+  header .spacer{flex:1}
+  .badge{font-size:11px;background:#1f2937;padding:4px 10px;border-radius:999px;color:#94a3b8}
+  .login{max-width:340px;margin:120px auto;background:#111a2e;padding:28px;border-radius:14px;border:1px solid #1f2937}
+  .login h2{margin:0 0 18px}
+  .login input,.login button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #1f2937;background:#0b1220;color:#fff;font-size:14px}
+  .login button{background:#3b82f6;cursor:pointer;border:none;font-weight:600}
+  .login button:hover{background:#2563eb}
+  .container{padding:22px;display:grid;gap:18px;max-width:1400px;margin:0 auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .card{background:#111a2e;padding:16px 18px;border-radius:12px;border:1px solid #1f2937}
+  .card .label{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
+  .card .value{font-size:26px;font-weight:700;margin-top:8px}
+  .panel{background:#111a2e;padding:18px;border-radius:12px;border:1px solid #1f2937}
+  .panel h2{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .panel .actions{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #1f2937;vertical-align:top}
+  th{color:#94a3b8;font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+  tr:hover td{background:#0f1728}
+  .otp{background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;font-weight:700;font-family:monospace;font-size:13px}
+  .btn{padding:8px 14px;border-radius:7px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:13px;font-weight:500}
+  .btn:hover{background:#2563eb}
+  .btn.secondary{background:#334155}
+  .btn.secondary:hover{background:#475569}
+  input.filter{padding:8px 12px;border-radius:7px;border:1px solid #1f2937;background:#0b1220;color:#fff;font-size:13px;min-width:200px}
+  .hidden{display:none!important}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#1e293b;color:#94a3b8}
+  .msgtext{max-width:400px;word-break:break-word;color:#cbd5e1}
+  .note{color:#94a3b8;font-size:12px;margin:8px 0 0}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h2>🤖 Meta Auto Creator</h2>
-        <div class="input-group">
-            <input type="number" id="accCount" value="1" min="1" max="10" placeholder="How many accounts?">
-            <button class="start-btn" id="startBtn" onclick="startBot()">Start</button>
-        </div>
-        <div class="status" id="statusText"></div>
-        <div class="actions">
-            <button class="btn-copy-all" onclick="copyAll()">Copy All Emails</button>
-            <button class="btn-clear" onclick="clearData()">Reset</button>
-        </div>
-        <div class="email-list" id="emailList"></div>
 
-        <!-- লাইভ কনসোল UI -->
-        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Live Console:</div>
-        <div class="console-box" id="consoleBox">
-            <div class="log-line">Waiting for start...</div>
-        </div>
+<div id="loginBox" class="login">
+  <h2>🔐 Login</h2>
+  <input id="pwd" type="password" placeholder="Dashboard password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div id="dash" class="hidden">
+  <header>
+    <h1>📩 iVAS Dashboard</h1>
+    <span class="badge" id="pollBadge">Polling: off</span>
+    <span class="spacer"></span>
+    <span class="badge" id="rateInfo">Rate: –</span>
+    <button class="btn secondary" onclick="logout()" style="padding:6px 12px;font-size:12px">Logout</button>
+  </header>
+
+  <div class="container">
+    <div class="cards" id="summaryCards"></div>
+
+    <div class="panel">
+      <h2>📈 Daily Earnings (iVAS)</h2>
+      <canvas id="earnChart" height="70"></canvas>
     </div>
 
-    <script>
-        let savedEmails = [];
-        let currentLogs = [];
-        let isAutoScroll = true;
+    <div class="panel">
+      <h2>📊 Local DB Statistics</h2>
+      <div class="cards" id="localStats"></div>
+    </div>
 
-        const consoleBox = document.getElementById('consoleBox');
+    <div class="panel">
+      <h2>🔄 Polling Control</h2>
+      <div class="actions">
+        <button class="btn" onclick="startPolling()">▶ Start</button>
+        <button class="btn secondary" onclick="stopPolling()">⏸ Stop</button>
+        <span class="tag" id="pollStatus">–</span>
+      </div>
+      <p class="note">Webhook setup থাকলে polling বন্ধ রাখুন। Free plan-এ webhook sleep-এর কারণে কাজ না করলে polling চালু রাখুন।</p>
+    </div>
 
-        // ইউজার ম্যানুয়ালি স্ক্রল করলে অটো-স্ক্রল বন্ধ হবে
-        consoleBox.addEventListener('scroll', () => {
-            const isAtBottom = consoleBox.scrollHeight - consoleBox.scrollTop <= consoleBox.clientHeight + 50;
-            isAutoScroll = isAtBottom;
-        });
+    <div class="panel">
+      <h2>⚡ Latest OTPs <span class="tag" id="otpCount">0</span></h2>
+      <div class="actions">
+        <input class="filter" id="otpNumFilter" placeholder="Filter by number..." oninput="loadLocalMessages()">
+        <input class="filter" id="otpQ" placeholder="Search message..." oninput="loadLocalMessages()">
+        <button class="btn secondary" onclick="loadLocalMessages()">Refresh</button>
+      </div>
+      <table id="otpTable">
+        <thead><tr><th>Time</th><th>Number</th><th>Source</th><th>OTP</th><th>Message</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-        function renderEmails() {
-            const list = document.getElementById('emailList');
-            list.innerHTML = '';
-            if (savedEmails.length === 0) {
-                list.innerHTML = '<div style="text-align:center; color:#64748b; padding:10px;">No emails generated yet.</div>';
-                return;
-            }
-            savedEmails.slice().reverse().forEach((email) => {
-                const div = document.createElement('div');
-                div.className = 'email-item';
-                div.innerHTML = `<span class="email-text">${email}</span><button class="btn-copy" onclick="copyOne('${email}', this)">Copy</button>`;
-                list.appendChild(div);
-            });
-        }
+    <div class="panel">
+      <h2>📱 My Numbers</h2>
+      <div class="actions">
+        <input class="filter" id="rangeFilter" placeholder="Filter by range..." oninput="loadNumbers()">
+      </div>
+      <table id="numbersTable">
+        <thead><tr><th>Number</th><th>Range</th><th>Rate</th><th>Currency</th><th>Assigned</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-        function renderLogs(logs) {
-            if (!logs || logs.length === 0) return;
-            // শুধুমাত্র নতুন লগগুলো অ্যাড করব যাতে স্ক্রল জাম্প না করে
-            consoleBox.innerHTML = logs.map(l => `<div class="log-line">${l}</div>`).join('');
-            if (isAutoScroll) {
-                consoleBox.scrollTop = consoleBox.scrollHeight;
-            }
-        }
+    <div class="panel">
+      <h2>🏆 Top Earning Numbers</h2>
+      <table id="topTable">
+        <thead><tr><th>Number</th><th>Range</th><th>Messages</th><th>Earnings (USD)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-        function copyOne(email, btnElement) {
-            navigator.clipboard.writeText(email).then(() => {
-                btnElement.textContent = 'Copied!';
-                btnElement.style.background = '#10b981';
-                setTimeout(() => { btnElement.textContent = 'Copy'; btnElement.style.background = '#334155'; }, 1500);
-            });
-        }
+<script>
+let PWD = sessionStorage.getItem('ivas_pwd') || '';
+let chart = null;
+let localTimer = null;
 
-        function copyAll() {
-            if (savedEmails.length === 0) return alert('No emails to copy!');
-            navigator.clipboard.writeText(savedEmails.join('\n')).then(() => {
-                const btn = document.querySelector('.btn-copy-all');
-                btn.textContent = 'Copied All!';
-                btn.style.background = '#10b981';
-                setTimeout(() => { btn.textContent = 'Copy All Emails'; btn.style.background = '#3b82f6'; }, 1500);
-            });
-        }
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { 'x-dashboard-password': PWD, 'Content-Type': 'application/json', ...(opts.headers||{}) },
+  });
+  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  return res.json();
+}
 
-        function clearData() {
-            if (confirm('Are you sure you want to clear all history?')) {
-                fetch('/api/reset', { method: 'POST' });
-                savedEmails = [];
-                currentLogs = [];
-                renderEmails();
-                consoleBox.innerHTML = '<div class="log-line">Console cleared.</div>';
-            }
-        }
+function login() {
+  PWD = document.getElementById('pwd').value;
+  sessionStorage.setItem('ivas_pwd', PWD);
+  init();
+}
+function logout() {
+  sessionStorage.removeItem('ivas_pwd');
+  document.getElementById('dash').classList.add('hidden');
+  document.getElementById('loginBox').classList.remove('hidden');
+  if (localTimer) clearInterval(localTimer);
+}
 
-        async function startBot() {
-            const count = document.getElementById('accCount').value;
-            if (count < 1) return alert('Minimum 1 account needed.');
+function extractOTP(t) {
+  if (!t) return null;
+  const ps = [/\b(\d{4,8})\b.{0,30}(?:code|otp|verification|pin)/i, /(?:code|otp|verification|pin)[^\d]{0,15}(\d{4,8})\b/i, /\b(\d{6})\b/, /\b(\d{4,8})\b/];
+  for (const p of ps) { const m = t.match(p); if (m) return m[1]; }
+  return null;
+}
 
-            const startBtn = document.getElementById('startBtn');
-            const statusText = document.getElementById('statusText');
+async function init() {
+  try {
+    const s = await api('/api/summary');
+    document.getElementById('loginBox').classList.add('hidden');
+    document.getElementById('dash').classList.remove('hidden');
 
-            startBtn.disabled = true;
-            startBtn.textContent = 'Running...';
-            statusText.textContent = `Starting ${count} workers...`;
+    renderSummary(s.statistics);
+    renderChart(s.statistics);
+    renderTop(s.statistics?.top_numbers || []);
+    renderNumbers(s.numbers || []);
+    renderLocalStats(s.otp_stats);
+    updatePollBadge(s.polling);
 
-            try {
-                const response = await fetch('/api/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ count: parseInt(count) })
-                });
-                const data = await response.json();
-                statusText.textContent = data.message;
-            } catch (err) {
-                alert("Server connection failed!");
-                statusText.textContent = "Connection Error";
-            } finally {
-                setTimeout(() => {
-                    startBtn.disabled = false;
-                    startBtn.textContent = 'Start';
-                }, 3000);
-            }
-        }
+    await loadLocalMessages();
+    await loadRateInfo();
 
-        async function pollEmails() {
-            try {
-                const res = await fetch('/api/emails');
-                const data = await res.json();
-                
-                // ইমেইল আপডেট
-                if (data.emails && data.emails.length !== savedEmails.length) {
-                    savedEmails = data.emails;
-                    renderEmails();
-                }
-                
-                // লগ আপডেট
-                if (data.logs) {
-                    renderLogs(data.logs);
-                }
-            } catch(e) {}
-        }
+    if (localTimer) clearInterval(localTimer);
+    localTimer = setInterval(async () => {
+      await loadLocalMessages();
+      const st = await api('/api/polling/status');
+      updatePollBadge(st.running);
+    }, 15000);
+  } catch (e) {
+    alert('Login failed: ' + e.message);
+  }
+}
 
-        setInterval(pollEmails, 2000); // প্রতি ২ সেকেন্ডে আপডেট হবে
-        renderEmails();
-        pollEmails();
-    </script>
+function renderSummary(stats) {
+  const s = stats?.summary || {};
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="card"><div class="label">Total Messages</div><div class="value">${s.total_messages ?? 0}</div></div>
+    <div class="card"><div class="label">A2P</div><div class="value">${s.a2p_messages ?? 0}</div></div>
+    <div class="card"><div class="label">P2P</div><div class="value">${s.p2p_messages ?? 0}</div></div>
+    <div class="card"><div class="label">Earnings (USD)</div><div class="value">$${(s.earnings?.USD ?? 0).toFixed(3)}</div></div>
+  `;
+}
+
+function renderLocalStats(st) {
+  document.getElementById('localStats').innerHTML = `
+    <div class="card"><div class="label">DB Messages</div><div class="value">${st?.total ?? 0}</div></div>
+    <div class="card"><div class="label">With OTP</div><div class="value">${st?.withOtp ?? 0}</div></div>
+    <div class="card"><div class="label">Last 24h</div><div class="value">${st?.last24 ?? 0}</div></div>
+  `;
+}
+
+function renderChart(stats) {
+  const b = stats?.breakdown || [];
+  const ctx = document.getElementById('earnChart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: b.map(x => x.period),
+      datasets: [{
+        label: 'Earnings (USD)',
+        data: b.map(x => x.earnings?.USD ?? 0),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.15)',
+        tension: 0.3, fill: true, pointRadius: 3,
+      }],
+    },
+    options: {
+      plugins: { legend: { labels: { color: '#e2e8f0' } } },
+      scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } },
+    },
+  });
+}
+
+function renderTop(top) {
+  document.querySelector('#topTable tbody').innerHTML = (top || []).map(t => `
+    <tr><td>${t.number}</td><td>${t.range_name}</td><td>${t.messages}</td><td>$${t.earnings?.USD ?? 0}</td></tr>
+  `).join('') || '<tr><td colspan="4" style="color:#64748b">No data</td></tr>';
+}
+
+async function loadNumbers() {
+  const rn = document.getElementById('rangeFilter').value;
+  const q = new URLSearchParams({ per_page: 100 });
+  if (rn) q.set('range_name', rn);
+  const res = await api('/api/numbers?' + q);
+  renderNumbers(res.data || []);
+}
+
+function renderNumbers(nums) {
+  document.querySelector('#numbersTable tbody').innerHTML = (nums || []).map(n => `
+    <tr><td>${n.number}</td><td>${n.range_name}</td><td>$${n.a2p_rate}</td><td>${n.currency}</td><td>${n.assigned_at || ''}</td></tr>
+  `).join('') || '<tr><td colspan="5" style="color:#64748b">No numbers</td></tr>';
+}
+
+async function loadLocalMessages() {
+  const number = document.getElementById('otpNumFilter')?.value || '';
+  const q = document.getElementById('otpQ')?.value || '';
+  const params = new URLSearchParams({ limit: 100 });
+  if (number) params.set('number', number);
+  if (q) params.set('q', q);
+  const res = await api('/api/messages/local?' + params);
+  const rows = (res.data || []).map(m => `
+    <tr>
+      <td>${new Date(m.received_at).toLocaleString()}</td>
+      <td>${m.number}</td>
+      <td>${m.source || ''}</td>
+      <td>${m.otp ? `<span class="otp">${m.otp}</span>` : '-'}</td>
+      <td class="msgtext">${(m.message || '').slice(0, 120)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="color:#64748b">No messages</td></tr>';
+  document.querySelector('#otpTable tbody').innerHTML = rows;
+  document.getElementById('otpCount').textContent = res.total ?? 0;
+}
+
+async function startPolling() {
+  const r = await api('/api/polling/start', { method: 'POST' });
+  updatePollBadge(r.running);
+}
+async function stopPolling() {
+  const r = await api('/api/polling/stop', { method: 'POST' });
+  updatePollBadge(r.running);
+}
+function updatePollBadge(on) {
+  const b = document.getElementById('pollBadge');
+  const s = document.getElementById('pollStatus');
+  if (b) { b.textContent = 'Polling: ' + (on ? 'on' : 'off'); b.style.color = on ? '#86efac' : '#94a3b8'; }
+  if (s) s.textContent = on ? 'running' : 'stopped';
+}
+
+async function loadRateInfo() {
+  try {
+    const r = await api('/api/rate-info');
+    document.getElementById('rateInfo').textContent = `Rate: ${r.remaining}/${r.limit}`;
+  } catch {}
+}
+
+if (PWD) init();
+</script>
 </body>
 </html>
