@@ -13,15 +13,15 @@ const PASSWORD = "Tamim100";
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxAhK9zUcjwSNGe4ykaz1r8UZlzVecBP9jblSD13ZkEmh2nzPLTucNqEsNmFx9iwOdmPg/exec";
 
 let liveEmails = [];
-let liveLogs = []; // নতুন: লাইভ লগ রাখার জন্য
+let liveLogs = [];
 let isRunning = false;
 
 function addLog(msg) {
     const time = new Date().toLocaleTimeString();
     const logMsg = `[${time}] ${msg}`;
-    console.log(logMsg); // Render সার্ভার লগে দেখাবে
-    liveLogs.push(logMsg); // ওয়েবসাইটে দেখাবে
-    if (liveLogs.length > 50) liveLogs.shift(); // সর্বোচ্চ ৫০টি লগ রাখবে
+    console.log(logMsg);
+    liveLogs.push(logMsg);
+    if (liveLogs.length > 50) liveLogs.shift();
 }
 
 async function getEmailFromApi() {
@@ -54,9 +54,16 @@ async function createAccount(workerId) {
     addLog(`[Worker ${workerId}] Starting browser...`);
     let browser;
     try {
+        // চ্যানেল এবং আর্গুমেন্টস সেট করা হলো যাতে Render এ ক্র্যাশ না করে
         browser = await chromium.launch({ 
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process']
+            channel: 'chromium', 
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox', 
+                '--disable-dev-shm-usage',
+                '--disable-gpu'
+            ]
         });
 
         const contextOptions = {
@@ -91,10 +98,9 @@ async function createAccount(workerId) {
         await continueBtn.click();
         await page.waitForTimeout(4000);
 
-        // চেক করা মেটা ব্লক করেছে কিনা
         let content = await page.content();
         if (content.includes('Access Denied') || content.includes('Something went wrong')) {
-            addLog(`[Worker ${workerId}] ❌ Blocked by Meta (Access Denied/Error).`);
+            addLog(`[Worker ${workerId}] ❌ Blocked by Meta (Access Denied).`);
             return { success: false };
         }
 
@@ -145,7 +151,7 @@ async function createAccount(workerId) {
 }
 
 app.get('/api/emails', (req, res) => {
-    res.json({ emails: liveEmails, logs: liveLogs });
+    res.json({ emails: liveEmails, logs: liveLogs, running: isRunning });
 });
 
 app.post('/api/reset', (req, res) => {
@@ -164,7 +170,7 @@ app.post('/api/start', async (req, res) => {
     isRunning = true;
     addLog(`🚀 Started request for ${count} account(s)...`);
     
-    res.json({ message: `Started ${count} workers. Watch logs below.` });
+    res.json({ message: `Started ${count} workers. Please wait.` });
 
     for (let i = 1; i <= count; i++) {
         await createAccount(i);
