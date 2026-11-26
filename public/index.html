@@ -18,12 +18,18 @@
         .actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
         .btn-copy-all { background: #3b82f6; color: white; }
         .btn-clear { background: #ef4444; color: white; }
-        .email-list { display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 5px; }
+        
+        .email-list { display: flex; flex-direction: column; gap: 10px; max-height: 30vh; overflow-y: auto; padding-right: 5px; margin-bottom: 15px; }
         .email-item { display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; }
         .email-text { font-family: monospace; font-size: 14px; color: #cbd5e1; word-break: break-all; }
         .btn-copy { background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.2s; }
         .btn-copy:hover { background: #475569; }
-        .status { text-align: center; font-size: 13px; color: #38bdf8; margin-bottom: 10px; height: 20px; }
+        
+        .status { text-align: center; font-size: 13px; color: #38bdf8; margin-bottom: 10px; min-height: 20px; }
+
+        /* লাইভ কনসোল স্টাইল */
+        .console-box { background: #000; color: #10b981; font-family: monospace; font-size: 12px; padding: 10px; border-radius: 8px; height: 150px; overflow-y: auto; border: 1px solid #334155; display: flex; flex-direction: column; gap: 4px; }
+        .log-line { line-height: 1.4; word-wrap: break-word; }
     </style>
 </head>
 <body>
@@ -39,10 +45,26 @@
             <button class="btn-clear" onclick="clearData()">Reset</button>
         </div>
         <div class="email-list" id="emailList"></div>
+
+        <!-- লাইভ কনসোল UI -->
+        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Live Console:</div>
+        <div class="console-box" id="consoleBox">
+            <div class="log-line">Waiting for start...</div>
+        </div>
     </div>
 
     <script>
         let savedEmails = [];
+        let currentLogs = [];
+        let isAutoScroll = true;
+
+        const consoleBox = document.getElementById('consoleBox');
+
+        // ইউজার ম্যানুয়ালি স্ক্রল করলে অটো-স্ক্রল বন্ধ হবে
+        consoleBox.addEventListener('scroll', () => {
+            const isAtBottom = consoleBox.scrollHeight - consoleBox.scrollTop <= consoleBox.clientHeight + 50;
+            isAutoScroll = isAtBottom;
+        });
 
         function renderEmails() {
             const list = document.getElementById('emailList');
@@ -57,6 +79,15 @@
                 div.innerHTML = `<span class="email-text">${email}</span><button class="btn-copy" onclick="copyOne('${email}', this)">Copy</button>`;
                 list.appendChild(div);
             });
+        }
+
+        function renderLogs(logs) {
+            if (!logs || logs.length === 0) return;
+            // শুধুমাত্র নতুন লগগুলো অ্যাড করব যাতে স্ক্রল জাম্প না করে
+            consoleBox.innerHTML = logs.map(l => `<div class="log-line">${l}</div>`).join('');
+            if (isAutoScroll) {
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            }
         }
 
         function copyOne(email, btnElement) {
@@ -81,8 +112,9 @@
             if (confirm('Are you sure you want to clear all history?')) {
                 fetch('/api/reset', { method: 'POST' });
                 savedEmails = [];
-                localStorage.setItem('meta_emails', JSON.stringify([]));
+                currentLogs = [];
                 renderEmails();
+                consoleBox.innerHTML = '<div class="log-line">Console cleared.</div>';
             }
         }
 
@@ -104,9 +136,10 @@
                     body: JSON.stringify({ count: parseInt(count) })
                 });
                 const data = await response.json();
-                statusText.textContent = data.message + " Emails will appear automatically.";
+                statusText.textContent = data.message;
             } catch (err) {
                 alert("Server connection failed!");
+                statusText.textContent = "Connection Error";
             } finally {
                 setTimeout(() => {
                     startBtn.disabled = false;
@@ -115,23 +148,25 @@
             }
         }
 
-        // লাইভ Polling: প্রতি ৩ সেকেন্ডে সার্ভার থেকে নতুন ইমেইল চেক করবে
         async function pollEmails() {
             try {
                 const res = await fetch('/api/emails');
                 const data = await res.json();
+                
+                // ইমেইল আপডেট
                 if (data.emails && data.emails.length !== savedEmails.length) {
                     savedEmails = data.emails;
-                    localStorage.setItem('meta_emails', JSON.stringify(savedEmails));
                     renderEmails();
+                }
+                
+                // লগ আপডেট
+                if (data.logs) {
+                    renderLogs(data.logs);
                 }
             } catch(e) {}
         }
 
-        setInterval(pollEmails, 3000);
-
-        // পেজ লোড হলে লোকাল স্টোরেজ থেকে দেখাবে
-        savedEmails = JSON.parse(localStorage.getItem('meta_emails')) || [];
+        setInterval(pollEmails, 2000); // প্রতি ২ সেকেন্ডে আপডেট হবে
         renderEmails();
         pollEmails();
     </script>
