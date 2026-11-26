@@ -1,187 +1,240 @@
+require('dotenv').config();
 const express = require('express');
-const { chromium } = require('playwright');
 const axios = require('axios');
+const NodeCache = require('node-cache');
 const path = require('path');
-const cors = require('cors');
+const { extractOTP } = require('./otp');
+const dbApi = require('./db');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const PASSWORD = "Tamim100";
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbxAhK9zUcjwSNGe4ykaz1r8UZlzVecBP9jblSD13ZkEmh2nzPLTucNqEsNmFx9iwOdmPg/exec";
+const IVAS_BASE = 'https://www.ivasms.com/api/v1';
+const cache = new NodeCache({ stdTTL: 30 });
 
-let liveEmails = [];
-let liveLogs = [];
-let isRunning = false;
-
-function addLog(msg) {
-    const time = new Date().toLocaleTimeString();
-    const logMsg = `[${time}] ${msg}`;
-    console.log(logMsg);
-    liveLogs.push(logMsg);
-    if (liveLogs.length > 50) liveLogs.shift();
-}
-
-async function getEmailFromApi() {
-    try {
-        addLog("Fetching email from API...");
-        const resp = await axios.get('https://mailmomy.com/api/domains/active', { timeout: 8000 });
-        let domains = [];
-        if (resp.data) {
-            if (Array.isArray(resp.data)) domains = resp.data;
-            else if (resp.data.domains) domains = resp.data.domains;
-            else if (resp.data.data) domains = resp.data.data;
-        }
-        if (domains.length > 0) {
-            const d = domains[Math.floor(Math.random() * domains.length)];
-            let domainStr = typeof d === 'string' ? d : (d.domain || d.name);
-            if (domainStr) {
-                const email = `${Math.random().toString(36).substring(2, 10)}@${domainStr}`;
-                addLog(`Email generated: ${email}`);
-                return email;
-            }
-        }
-    } catch (e) { 
-        addLog(`API Error: ${e.message}`); 
-    }
-    addLog("API Failed, using fallback email.");
-    return `bot${Math.floor(Math.random()*999999)}@mailmomy.com`;
-}
-
-async function createAccount(workerId) {
-    addLog(`[Worker ${workerId}] Starting browser...`);
-    let browser;
-    try {
-        // চ্যানেল এবং আর্গুমেন্টস সেট করা হলো যাতে Render এ ক্র্যাশ না করে
-        browser = await chromium.launch({ 
-            headless: true,
-            channel: 'chromium', 
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox', 
-                '--disable-dev-shm-usage',
-                '--disable-gpu'
-            ]
-        });
-
-        const contextOptions = {
-            userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
-            viewport: { width: 412, height: 915 }
-        };
-
-        const context = await browser.newContext(contextOptions);
-        const page = await context.newPage();
-        
-        let email = await getEmailFromApi();
-        
-        addLog(`[Worker ${workerId}] Going to Meta...`);
-        await page.goto('https://auth.meta.com/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForTimeout(2000);
-
-        addLog(`[Worker ${workerId}] Clicking 'Use mobile or email'...`);
-        const useEmailBtn = await page.locator('text=Use mobile number or email address').first();
-        if (await useEmailBtn.isVisible().catch(() => false)) { 
-            await useEmailBtn.click(); 
-            await page.waitForTimeout(1500); 
-        }
-
-        addLog(`[Worker ${workerId}] Filling Email...`);
-        const emailInput = page.locator('input[type="email"], input[name="email"], input[type="text"]').first();
-        await emailInput.waitFor({ state: 'visible', timeout: 15000 });
-        await emailInput.fill(email);
-        await page.waitForTimeout(500);
-        
-        addLog(`[Worker ${workerId}] Clicking Continue...`);
-        const continueBtn = page.locator('button:has-text("Continue"), button:has-text("Next")').last();
-        await continueBtn.click();
-        await page.waitForTimeout(4000);
-
-        let content = await page.content();
-        if (content.includes('Access Denied') || content.includes('Something went wrong')) {
-            addLog(`[Worker ${workerId}] ❌ Blocked by Meta (Access Denied).`);
-            return { success: false };
-        }
-
-        const nameInputs = page.locator('input[type="text"]');
-        if (await nameInputs.count() >= 2) {
-            addLog(`[Worker ${workerId}] Filling Name...`);
-            await nameInputs.nth(0).fill("Sumaiya");
-            await nameInputs.nth(1).fill("Akter");
-            await page.locator('button:has-text("Next"), button:has-text("Continue")').last().click();
-            await page.waitForTimeout(3000);
-        }
-
-        const pwInput = page.locator('input[type="password"]');
-        if (await pwInput.isVisible().catch(() => false)) {
-            addLog(`[Worker ${workerId}] Filling Password...`);
-            await pwInput.fill(PASSWORD);
-            await page.locator('button:has-text("Continue"), button:has-text("Next")').last().click();
-            await page.waitForTimeout(4000);
-        }
-
-        content = await page.content();
-        if (content.includes('confirmation code') || content.includes('we sent a code') || content.includes('confirm your account')) {
-            addLog(`[Worker ${workerId}] ✅ Account Created: ${email}`);
-            
-            await axios.post(SHEET_URL, {
-                emailMobile: email,
-                password: PASSWORD,
-                provider: 'meta_ai',
-                museVerified: 'Meta Created'
-            }).catch(e => addLog('Sheet Error'));
-
-            liveEmails.push(email);
-            return { success: true, email };
-        } else if (content.includes('Access Denied')) {
-             addLog(`[Worker ${workerId}] ❌ Failed: Access Denied at final step.`);
-             return { success: false };
-        } else {
-            addLog(`[Worker ${workerId}] ❌ Failed. Could not find OTP page.`);
-            return { success: false };
-        }
-
-    } catch (err) {
-        addLog(`[Worker ${workerId}] Error: ${err.message}`);
-        return { success: false };
-    } finally {
-        if (browser) await browser.close();
-    }
-}
-
-app.get('/api/emails', (req, res) => {
-    res.json({ emails: liveEmails, logs: liveLogs, running: isRunning });
+const ivas = axios.create({
+  baseURL: IVAS_BASE,
+  headers: { Authorization: `Bearer ${process.env.IVAS_KEY}`, Accept: 'application/json' },
+  timeout: 20000,
 });
 
-app.post('/api/reset', (req, res) => {
-    liveEmails = [];
-    liveLogs = [];
-    addLog("Reset successful.");
-    res.json({ message: 'Cleared' });
+// 429 auto-retry
+ivas.interceptors.response.use(r => r, async (err) => {
+  if (err.response?.status === 429) {
+    const wait = (err.response.data?.error?.retry_after || 15) * 1000;
+    console.warn(`⏳ Rate limited, retry in ${wait / 1000}s`);
+    await new Promise(r => setTimeout(r, wait));
+    return ivas(err.config);
+  }
+  throw err;
 });
 
-app.post('/api/start', async (req, res) => {
-    if (isRunning) {
-        return res.status(400).json({ message: "Already running! Please wait." });
-    }
+function auth(req, res, next) {
+  const pwd = req.headers['x-dashboard-password'] || req.query.pwd;
+  if (pwd !== process.env.DASHBOARD_PASSWORD) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  next();
+}
 
-    const count = parseInt(req.body.count) || 1;
-    isRunning = true;
-    addLog(`🚀 Started request for ${count} account(s)...`);
-    
-    res.json({ message: `Started ${count} workers. Please wait.` });
+const wrap = fn => async (req, res) => {
+  try { await fn(req, res); }
+  catch (e) {
+    const status = e.response?.status || 500;
+    console.error('❌', e.message);
+    res.status(status).json(e.response?.data || { success: false, error: e.message });
+  }
+};
 
-    for (let i = 1; i <= count; i++) {
-        await createAccount(i);
-        await new Promise(r => setTimeout(r, 3000));
-    }
-    
-    isRunning = false;
-    addLog(`✅ All workers finished.`);
+// ---------- NUMBERS ----------
+app.get('/api/numbers', auth, wrap(async (req, res) => {
+  const key = 'numbers:' + JSON.stringify(req.query);
+  if (cache.has(key)) return res.json(cache.get(key));
+  const { data } = await ivas.get('/numbers', { params: req.query });
+  cache.set(key, data);
+  if (data.data?.length) dbApi.saveNumbers(data.data);
+  res.json(data);
+}));
+
+app.get('/api/numbers/cached', auth, (req, res) => {
+  res.json({ success: true, data: dbApi.getCachedNumbers() });
 });
+
+// ---------- STATISTICS ----------
+app.get('/api/statistics', auth, wrap(async (req, res) => {
+  const key = 'stats:' + JSON.stringify(req.query);
+  if (cache.has(key)) return res.json(cache.get(key));
+  const { data } = await ivas.get('/statistics', { params: req.query });
+  cache.set(key, data, 60);
+  res.json(data);
+}));
+
+app.get('/api/statistics/local', auth, (req, res) => {
+  const days = parseInt(req.query.days || '30');
+  res.json({ success: true, data: dbApi.getDailyStats(days) });
+});
+
+// ---------- MESSAGES ----------
+app.get('/api/messages', auth, wrap(async (req, res) => {
+  const key = 'msgs:' + JSON.stringify(req.query);
+  if (cache.has(key)) return res.json(cache.get(key));
+  const { data } = await ivas.get('/messages', { params: req.query });
+  cache.set(key, data, 10);
+  if (data.data?.length) {
+    data.data.forEach(m => {
+      const otp = extractOTP(m.message);
+      const isNew = dbApi.saveMessage(m, otp);
+      if (isNew && otp) console.log(`📩 NEW OTP [${m.number}] → ${otp}`);
+    });
+  }
+  res.json(data);
+}));
+
+app.get('/api/messages/local', auth, (req, res) => {
+  const { number, q, from, to } = req.query;
+  const limit = Math.min(parseInt(req.query.limit || '100'), 500);
+  const offset = parseInt(req.query.offset || '0');
+  const data = dbApi.getMessages({ number, q, from, to, limit, offset });
+  const total = dbApi.countMessages({ number, q });
+  res.json({ success: true, data, total, limit, offset });
+});
+
+// ---------- OTP ----------
+app.get('/api/otp/:number', auth, wrap(async (req, res) => {
+  const { number } = req.params;
+  const local = dbApi.getLatestOTP(number);
+  if (local && (Date.now() - new Date(local.received_at).getTime() < 10 * 60 * 1000)) {
+    return res.json({ success: true, source: 'db', ...local });
+  }
+  const { data } = await ivas.get('/messages', {
+    params: {
+      number, per_page: 10,
+      start_date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+    },
+  });
+  for (const m of data.data || []) {
+    const otp = extractOTP(m.message);
+    if (otp) {
+      dbApi.saveMessage(m, otp);
+      return res.json({ success: true, source: 'ivas', number, otp, message: m.message, received_at: m.received_at });
+    }
+  }
+  res.json({ success: true, number, otp: null, message: 'No OTP found' });
+}));
+
+app.get('/api/otp/latest', auth, (req, res) => {
+  res.json({ success: true, data: dbApi.getLatestOTP() || null });
+});
+
+// ---------- WEBHOOK ----------
+app.post('/api/webhook', (req, res) => {
+  const m = req.body || {};
+  const otp = extractOTP(m.message || '');
+  const isNew = dbApi.saveMessage(m, otp);
+  if (isNew) {
+    console.log(`🔔 WEBHOOK [${m.number}] ${m.source}${otp ? ' OTP=' + otp : ''}`);
+    cache.flushAll();
+  }
+  res.sendStatus(200);
+});
+
+// ---------- POLLING ----------
+let pollTimer = null;
+let pollRunning = false;
+
+async function pollOnce() {
+  if (pollRunning) return;
+  pollRunning = true;
+  try {
+    const { data } = await ivas.get('/messages', {
+      params: {
+        per_page: 100,
+        start_date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
+      },
+    });
+    let newCount = 0;
+    for (const m of (data.data || [])) {
+      const otp = extractOTP(m.message);
+      if (dbApi.saveMessage(m, otp)) {
+        newCount++;
+        if (otp) console.log(`🔄 POLL OTP [${m.number}] → ${otp}`);
+      }
+    }
+    if (newCount) cache.flushAll();
+    console.log(`[poll] ${new Date().toISOString()} — ${newCount} new`);
+  } catch (e) {
+    console.error('[poll error]', e.message);
+  } finally {
+    pollRunning = false;
+  }
+}
+
+app.post('/api/polling/start', auth, (req, res) => {
+  if (pollTimer) return res.json({ success: true, already: true, running: true });
+  const interval = parseInt(process.env.POLL_INTERVAL_MS || '60000');
+  pollTimer = setInterval(pollOnce, interval);
+  pollOnce();
+  res.json({ success: true, running: true, interval_ms: interval });
+});
+
+app.post('/api/polling/stop', auth, (req, res) => {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  res.json({ success: true, running: false });
+});
+
+app.get('/api/polling/status', auth, (req, res) => {
+  res.json({ success: true, running: !!pollTimer });
+});
+
+// ---------- SUMMARY ----------
+app.get('/api/summary', auth, wrap(async (req, res) => {
+  const [numbers, stats, msgs] = await Promise.allSettled([
+    ivas.get('/numbers', { params: { per_page: 100 } }),
+    ivas.get('/statistics', { params: {} }),
+    ivas.get('/messages', { params: { per_page: 20 } }),
+  ]);
+
+  const numbersData = numbers.status === 'fulfilled' ? numbers.value.data.data : dbApi.getCachedNumbers();
+  const statsData = stats.status === 'fulfilled' ? stats.value.data : null;
+  const msgsData = msgs.status === 'fulfilled' ? msgs.value.data.data : [];
+
+  if (numbersData?.length && numbers.status === 'fulfilled') dbApi.saveNumbers(numbersData);
+  msgsData.forEach(m => dbApi.saveMessage(m, extractOTP(m.message)));
+
+  res.json({
+    success: true,
+    numbers: numbersData,
+    statistics: statsData,
+    recent_messages: msgsData,
+    otp_stats: dbApi.getOtpStats(),
+    local_daily: dbApi.getDailyStats(14),
+    polling: !!pollTimer,
+  });
+}));
+
+// ---------- RATE INFO ----------
+app.get('/api/rate-info', auth, wrap(async (req, res) => {
+  const r = await ivas.get('/numbers', { params: { per_page: 1 } });
+  res.json({
+    success: true,
+    limit: r.headers['x-ratelimit-limit'],
+    remaining: r.headers['x-ratelimit-remaining'],
+  });
+}));
+
+// ---------- HEALTH ----------
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString(), polling: !!pollTimer });
+});
+
+// ---------- AUTO-START POLLING on boot (optional) ----------
+if (process.env.AUTO_POLL === 'true') {
+  const interval = parseInt(process.env.POLL_INTERVAL_MS || '60000');
+  pollTimer = setInterval(pollOnce, interval);
+  pollOnce();
+  console.log('▶ Polling auto-started');
+}
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`\n🌐 Server running on port ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
