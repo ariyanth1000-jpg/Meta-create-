@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: meta-bot
+    env: node
+    plan: free
+    buildCommand: npm install && npx playwright install chromium --with-deps
+    startCommand: node server.js
