@@ -1,7 +1,20 @@
 services:
   - type: web
-    name: meta-bot
-    env: node
+    name: ivas-dashboard
+    runtime: node
     plan: free
-    buildCommand: npm install && npx playwright install chromium --with-deps
-    startCommand: node server.js
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: IVAS_KEY
+        sync: false
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      - key: DB_PATH
+        value: /tmp/ivas.db
+      - key: POLL_INTERVAL_MS
+        value: "60000"
+      - key: AUTO_POLL
+        value: "false"
