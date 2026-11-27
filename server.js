@@ -36,48 +36,39 @@ const wrap = fn => async (req, res) => {
   }
 };
 
-app.get('/api/numbers', wrap(async (req, res) => {
-  const key = 'numbers:' + JSON.stringify(req.query);
-  if (cache.has(key)) return res.json(cache.get(key));
-  const { data } = await ivas.get('/numbers', { params: req.query });
-  cache.set(key, data);
-  if (data.data?.length) dbApi.saveNumbers(data.data);
-  res.json(data);
-}));
-
-app.get('/api/numbers/local', (req, res) => {
-  const { range_name } = req.query;
-  let data = dbApi.getCachedNumbers();
-  
-  if (range_name) {
-    data = data.filter(n => n.range_name.toLowerCase().includes(range_name.toLowerCase()));
-  }
-  
-  res.json({ success: true, data });
+// ১. ইউনিক রেঞ্জ লিস্ট (ড্রপডাউনের জন্য)
+app.get('/api/ranges', (req, res) => {
+  const ranges = dbApi.getUniqueRanges();
+  res.json({ success: true, data: ranges });
 });
 
-app.get('/api/messages/local', (req, res) => {
-  const { number, q, from, to } = req.query;
-  const limit = Math.min(parseInt(req.query.limit || '50'), 500);
-  const offset = parseInt(req.query.offset || '0');
-  const data = dbApi.getMessages({ number, q, from, to, limit, offset });
-  const total = dbApi.countMessages({ number, q });
-  res.json({ success: true, data, total, limit, offset });
-});
-
+// ২. রেঞ্জ অনুযায়ী নাম্বার নেওয়া (Get Number বাটনের জন্য)
 app.post('/api/numbers/get', (req, res) => {
   try {
-    const numbers = dbApi.getCachedNumbers();
-    if (numbers.length === 0) {
-      return res.json({ success: false, message: 'No numbers left to get' });
+    const { range } = req.body;
+    if (!range) return res.json({ success: false, message: 'Please select a range' });
+
+    const numData = dbApi.getNumberByRange(range);
+    if (!numData) {
+      return res.json({ success: false, message: 'No numbers left in this range' });
     }
-    const numberToDelete = numbers[0].number;
-    dbApi.deleteNumber(numberToDelete);
-    res.json({ success: true, number: numberToDelete });
+    
+    dbApi.deleteNumber(numData.number);
+    res.json({ success: true, number: numData.number });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+// ৩. OTP লিস্ট
+app.get('/api/messages/local', (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || '50'), 500);
+  const offset = parseInt(req.query.offset || '0');
+  const data = dbApi.getMessages({ limit, offset });
+  const total = dbApi.countMessages();
+  res.json({ success: true, data, total, limit, offset });
+});
+
 
 // Polling System
 let pollTimer = null;
@@ -112,7 +103,7 @@ async function pollOnce() {
   }
 }
 
-pollOnce(); // সার্ভার চালু হওয়ার সাথে সাথেই একবার রান হবে
+pollOnce(); 
 
 if (process.env.AUTO_POLL === 'true') {
   const interval = parseInt(process.env.POLL_INTERVAL_MS || '60000');
