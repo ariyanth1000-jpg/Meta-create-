@@ -19,6 +19,7 @@ const ivas = axios.create({
   timeout: 20000,
 });
 
+// 429 Rate Limit Auto-Retry 
 ivas.interceptors.response.use(r => r, async (err) => {
   if (err.response?.status === 429) {
     const wait = (err.response.data?.error?.retry_after || 15) * 1000;
@@ -36,8 +37,7 @@ const wrap = fn => async (req, res) => {
   }
 };
 
-// API Routes (কোনো Auth নেই)
-
+// 1. iVAS থেকে লাইভ নাম্বার আনা (ব্যান্ডউইথ বাঁচাতে ক্যাশে রাখা হয়)
 app.get('/api/numbers', wrap(async (req, res) => {
   const key = 'numbers:' + JSON.stringify(req.query);
   if (cache.has(key)) return res.json(cache.get(key));
@@ -47,6 +47,13 @@ app.get('/api/numbers', wrap(async (req, res) => {
   res.json(data);
 }));
 
+// 2. ডাটাবেস থেকে নাম্বার আনা (ইউজাররা এটা দেখবে, যাতে API লিমিট না শেষ হয়)
+app.get('/api/numbers/local', (req, res) => {
+  const data = dbApi.getCachedNumbers();
+  res.json({ success: true, data });
+});
+
+// 3. ডাটাবেস থেকে OTP লিস্ট আনা (লাইভ আপডেট)
 app.get('/api/messages/local', (req, res) => {
   const { number, q, from, to } = req.query;
   const limit = Math.min(parseInt(req.query.limit || '50'), 500);
@@ -56,6 +63,7 @@ app.get('/api/messages/local', (req, res) => {
   res.json({ success: true, data, total, limit, offset });
 });
 
+// 4. Get Number (নাম্বার ডিলিট করা)
 app.post('/api/numbers/get', (req, res) => {
   try {
     const numbers = dbApi.getCachedNumbers();
@@ -70,6 +78,7 @@ app.post('/api/numbers/get', (req, res) => {
   }
 });
 
+// 5. API Limit দেখার জন্য
 app.get('/api/rate-info', wrap(async (req, res) => {
   const r = await ivas.get('/numbers', { params: { per_page: 1 } });
   res.json({
@@ -79,7 +88,9 @@ app.get('/api/rate-info', wrap(async (req, res) => {
   });
 }));
 
-// Polling System (AUTO POLL)
+// ==========================================
+// Polling System (ব্যাকগ্রাউন্ডে OTP চেক করবে)
+// ==========================================
 let pollTimer = null;
 let pollRunning = false;
 
@@ -87,14 +98,22 @@ async function pollOnce() {
   if (pollRunning) return;
   pollRunning = true;
   try {
-    const { data } = await ivas.get('/messages', {
+    // ১. নতুন নাম্বার সিঙ্ক করা
+    const numRes = await ivas.get('/numbers', { params: { per_page: 100 } });
+    if (numRes.data.data?.length) {
+      dbApi.saveNumbers(numRes.data.data);
+    }
+
+    // ২. নতুন মেসেজ সিঙ্ক করা
+    const msgRes = await ivas.get('/messages', {
       params: {
         per_page: 100,
         start_date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
       },
     });
+    
     let newCount = 0;
-    for (const m of (data.data || [])) {
+    for (const m of (msgRes.data.data || [])) {
       const otp = extractOTP(m.message);
       if (dbApi.saveMessage(m, otp)) {
         newCount++;
@@ -111,8 +130,8 @@ async function pollOnce() {
 if (process.env.AUTO_POLL === 'true') {
   const interval = parseInt(process.env.POLL_INTERVAL_MS || '60000');
   pollTimer = setInterval(pollOnce, interval);
-  pollOnce();
+  pollOnce(); // সার্ভার চালু হওয়ার সাথে সাথেই একবার চেক করবে
 }
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`✅ Tamim Number Panel running on port ${PORT}`));
