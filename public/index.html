@@ -4,281 +4,225 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>iVAS Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  *{box-sizing:border-box;font-family:system-ui,sans-serif}
-  body{margin:0;background:#0b1220;color:#e2e8f0;min-height:100vh}
-  header{padding:14px 22px;background:#111a2e;display:flex;gap:14px;align-items:center;border-bottom:1px solid #1f2937;position:sticky;top:0;z-index:10;flex-wrap:wrap}
-  header h1{margin:0;font-size:17px}
-  header .spacer{flex:1}
-  .badge{font-size:11px;background:#1f2937;padding:4px 10px;border-radius:999px;color:#94a3b8}
-  .login{max-width:340px;margin:120px auto;background:#111a2e;padding:28px;border-radius:14px;border:1px solid #1f2937}
-  .login h2{margin:0 0 18px}
-  .login input,.login button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #1f2937;background:#0b1220;color:#fff;font-size:14px}
-  .login button{background:#3b82f6;cursor:pointer;border:none;font-weight:600}
-  .login button:hover{background:#2563eb}
-  .container{padding:22px;display:grid;gap:18px;max-width:1400px;margin:0 auto}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
-  .card{background:#111a2e;padding:16px 18px;border-radius:12px;border:1px solid #1f2937}
-  .card .label{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
-  .card .value{font-size:26px;font-weight:700;margin-top:8px}
-  .panel{background:#111a2e;padding:18px;border-radius:12px;border:1px solid #1f2937}
-  .panel h2{margin:0 0 14px;font-size:15px;display:flex;align-items:center;gap:8px}
-  .panel .actions{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #1f2937;vertical-align:top}
-  th{color:#94a3b8;font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
-  tr:hover td{background:#0f1728}
-  .otp{background:#16a34a;color:#fff;padding:2px 8px;border-radius:4px;font-weight:700;font-family:monospace;font-size:13px}
-  .btn{padding:8px 14px;border-radius:7px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-size:13px;font-weight:500}
-  .btn:hover{background:#2563eb}
-  .btn.secondary{background:#334155}
-  .btn.secondary:hover{background:#475569}
-  input.filter{padding:8px 12px;border-radius:7px;border:1px solid #1f2937;background:#0b1220;color:#fff;font-size:13px;min-width:200px}
-  .hidden{display:none!important}
-  .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#1e293b;color:#94a3b8}
-  .msgtext{max-width:400px;word-break:break-word;color:#cbd5e1}
-  .note{color:#94a3b8;font-size:12px;margin:8px 0 0}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  
+  *{box-sizing:border-box; font-family:'Inter', sans-serif;}
+  body{margin:0; background:#0f172a; color:#e2e8f0; min-height:100vh;}
+  
+  header{padding:16px 24px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; position:sticky; top:0; z-index:10;}
+  header h1{margin:0; font-size:20px; color:#f8fafc; font-weight:600; letter-spacing:0.5px;}
+  
+  .container{padding:24px; display:grid; gap:24px; max-width:1200px; margin:0 auto;}
+  
+  .cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:20px;}
+  .card{background:#1e293b; padding:24px; border-radius:12px; border:1px solid #334155; text-align:center; transition:transform 0.2s; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+  .card:hover{transform:translateY(-2px); border-color:#3b82f6;}
+  .card .label{font-size:13px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; font-weight:600;}
+  .card .value{font-size:36px; font-weight:700; margin-top:12px; color:#f8fafc;}
+  
+  .panel{background:#1e293b; border-radius:12px; border:1px solid #334155; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
+  .panel-header{padding:16px 20px; background:#0f172a; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center;}
+  .panel-header h2{margin:0; font-size:16px; font-weight:600; color:#f8fafc; display:flex; align-items:center; gap:8px;}
+  
+  .btn{padding:10px 18px; border-radius:8px; border:none; background:#3b82f6; color:#fff; cursor:pointer; font-size:14px; font-weight:600; transition:background 0.2s;}
+  .btn:hover{background:#2563eb;}
+  .btn:disabled{background:#475569; cursor:not-allowed; opacity:0.7;}
+  
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th,td{text-align:left; padding:14px 20px; border-bottom:1px solid #334155;}
+  th{color:#94a3b8; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#1e293b;}
+  
+  .otp-highlight{background:#10b981; color:#fff; padding:6px 12px; border-radius:6px; font-family:monospace; font-size:18px; font-weight:700; display:inline-block; letter-spacing:2px; box-shadow:0 2px 8px rgba(16,185,129,0.4);}
+  
+  .empty-state{padding:30px; text-align:center; color:#64748b; font-size:14px;}
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
 </style>
 </head>
 <body>
 
-<div id="loginBox" class="login">
-  <h2>🔐 Login</h2>
-  <input id="pwd" type="password" placeholder="Dashboard password">
-  <button onclick="login()">Login</button>
-</div>
+<header>
+  <h1>📩 iVAS Dashboard</h1>
+  <div id="rateInfo" style="font-size:12px; color:#94a3b8; background:#0f172a; padding:6px 12px; border-radius:20px; border:1px solid #334155;">Connecting...</div>
+</header>
 
-<div id="dash" class="hidden">
-  <header>
-    <h1>📩 iVAS Dashboard</h1>
-    <span class="badge" id="pollBadge">Polling: off</span>
-    <span class="spacer"></span>
-    <span class="badge" id="rateInfo">Rate: –</span>
-    <button class="btn secondary" onclick="logout()" style="padding:6px 12px;font-size:12px">Logout</button>
-  </header>
+<div class="container">
 
-  <div class="container">
-    <div class="cards" id="summaryCards"></div>
-
-    <div class="panel">
-      <h2>📈 Daily Earnings (iVAS)</h2>
-      <canvas id="earnChart" height="70"></canvas>
+  <div class="cards">
+    <div class="card">
+      <div class="label">Total OTP Received</div>
+      <div class="value" id="totalOTP">0</div>
     </div>
+  </div>
 
-    <div class="panel">
-      <h2>📊 Local DB Statistics</h2>
-      <div class="cards" id="localStats"></div>
+  <div class="panel">
+    <div class="panel-header">
+      <h2>⚡ Latest OTPs</h2>
+      <span style="font-size:12px; color:#10b981; display:flex; align-items:center; gap:6px;">
+        <span style="width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block; animation:pulse 2s infinite;"></span> Live
+      </span>
     </div>
-
-    <div class="panel">
-      <h2>🔄 Polling Control</h2>
-      <div class="actions">
-        <button class="btn" onclick="startPolling()">▶ Start</button>
-        <button class="btn secondary" onclick="stopPolling()">⏸ Stop</button>
-        <span class="tag" id="pollStatus">–</span>
-      </div>
-      <p class="note">Webhook setup থাকলে polling বন্ধ রাখুন। Free plan-এ webhook sleep-এর কারণে কাজ না করলে polling চালু রাখুন।</p>
-    </div>
-
-    <div class="panel">
-      <h2>⚡ Latest OTPs <span class="tag" id="otpCount">0</span></h2>
-      <div class="actions">
-        <input class="filter" id="otpNumFilter" placeholder="Filter by number..." oninput="loadLocalMessages()">
-        <input class="filter" id="otpQ" placeholder="Search message..." oninput="loadLocalMessages()">
-        <button class="btn secondary" onclick="loadLocalMessages()">Refresh</button>
-      </div>
-      <table id="otpTable">
-        <thead><tr><th>Time</th><th>Number</th><th>Source</th><th>OTP</th><th>Message</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="panel">
-      <h2>📱 My Numbers</h2>
-      <div class="actions">
-        <input class="filter" id="rangeFilter" placeholder="Filter by range..." oninput="loadNumbers()">
-      </div>
-      <table id="numbersTable">
-        <thead><tr><th>Number</th><th>Range</th><th>Rate</th><th>Currency</th><th>Assigned</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="panel">
-      <h2>🏆 Top Earning Numbers</h2>
-      <table id="topTable">
-        <thead><tr><th>Number</th><th>Range</th><th>Messages</th><th>Earnings (USD)</th></tr></thead>
-        <tbody></tbody>
+    <div style="max-height:450px; overflow-y:auto;">
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Number</th><th>OTP Code</th><th>Message</th></tr>
+        </thead>
+        <tbody id="otpTableBody">
+          <tr><td colspan="4" class="empty-state">Loading data...</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>📱 My Numbers <span id="numberCount" style="color:#3b82f6; margin-left:8px; background:rgba(59,130,246,0.1); padding:2px 8px; border-radius:12px;">0</span></h2>
+      <button class="btn" id="getNumberBtn" onclick="getNumber()">Get Number</button>
+    </div>
+    <div style="max-height:400px; overflow-y:auto;">
+      <table>
+        <thead>
+          <tr><th>Number</th><th>Range</th></tr>
+        </thead>
+        <tbody id="numbersTableBody">
+          <tr><td colspan="2" class="empty-state">Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
-<script>
-let PWD = sessionStorage.getItem('ivas_pwd') || '';
-let chart = null;
-let localTimer = null;
+<style>
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+</style>
 
+<script>
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     ...opts,
-    headers: { 'x-dashboard-password': PWD, 'Content-Type': 'application/json', ...(opts.headers||{}) },
+    headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) },
   });
-  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
   return res.json();
 }
 
-function login() {
-  PWD = document.getElementById('pwd').value;
-  sessionStorage.setItem('ivas_pwd', PWD);
-  init();
-}
-function logout() {
-  sessionStorage.removeItem('ivas_pwd');
-  document.getElementById('dash').classList.add('hidden');
-  document.getElementById('loginBox').classList.remove('hidden');
-  if (localTimer) clearInterval(localTimer);
-}
-
-function extractOTP(t) {
-  if (!t) return null;
+function extractOTP(text) {
+  if (!text) return null;
   const ps = [/\b(\d{4,8})\b.{0,30}(?:code|otp|verification|pin)/i, /(?:code|otp|verification|pin)[^\d]{0,15}(\d{4,8})\b/i, /\b(\d{6})\b/, /\b(\d{4,8})\b/];
-  for (const p of ps) { const m = t.match(p); if (m) return m[1]; }
+  for (const p of ps) { const m = text.match(p); if (m) return m[1]; }
   return null;
 }
 
 async function init() {
-  try {
-    const s = await api('/api/summary');
-    document.getElementById('loginBox').classList.add('hidden');
-    document.getElementById('dash').classList.remove('hidden');
-
-    renderSummary(s.statistics);
-    renderChart(s.statistics);
-    renderTop(s.statistics?.top_numbers || []);
-    renderNumbers(s.numbers || []);
-    renderLocalStats(s.otp_stats);
-    updatePollBadge(s.polling);
-
+  await loadNumbers();
+  await loadLocalMessages();
+  loadRateInfo();
+  
+  // প্রতি ১০ সেকেন্ডে ডাটা অটো আপডেট হবে
+  setInterval(async () => {
     await loadLocalMessages();
-    await loadRateInfo();
-
-    if (localTimer) clearInterval(localTimer);
-    localTimer = setInterval(async () => {
-      await loadLocalMessages();
-      const st = await api('/api/polling/status');
-      updatePollBadge(st.running);
-    }, 15000);
-  } catch (e) {
-    alert('Login failed: ' + e.message);
-  }
-}
-
-function renderSummary(stats) {
-  const s = stats?.summary || {};
-  document.getElementById('summaryCards').innerHTML = `
-    <div class="card"><div class="label">Total Messages</div><div class="value">${s.total_messages ?? 0}</div></div>
-    <div class="card"><div class="label">A2P</div><div class="value">${s.a2p_messages ?? 0}</div></div>
-    <div class="card"><div class="label">P2P</div><div class="value">${s.p2p_messages ?? 0}</div></div>
-    <div class="card"><div class="label">Earnings (USD)</div><div class="value">$${(s.earnings?.USD ?? 0).toFixed(3)}</div></div>
-  `;
-}
-
-function renderLocalStats(st) {
-  document.getElementById('localStats').innerHTML = `
-    <div class="card"><div class="label">DB Messages</div><div class="value">${st?.total ?? 0}</div></div>
-    <div class="card"><div class="label">With OTP</div><div class="value">${st?.withOtp ?? 0}</div></div>
-    <div class="card"><div class="label">Last 24h</div><div class="value">${st?.last24 ?? 0}</div></div>
-  `;
-}
-
-function renderChart(stats) {
-  const b = stats?.breakdown || [];
-  const ctx = document.getElementById('earnChart').getContext('2d');
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: b.map(x => x.period),
-      datasets: [{
-        label: 'Earnings (USD)',
-        data: b.map(x => x.earnings?.USD ?? 0),
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.15)',
-        tension: 0.3, fill: true, pointRadius: 3,
-      }],
-    },
-    options: {
-      plugins: { legend: { labels: { color: '#e2e8f0' } } },
-      scales: { x: { ticks: { color: '#94a3b8' } }, y: { ticks: { color: '#94a3b8' } } },
-    },
-  });
-}
-
-function renderTop(top) {
-  document.querySelector('#topTable tbody').innerHTML = (top || []).map(t => `
-    <tr><td>${t.number}</td><td>${t.range_name}</td><td>${t.messages}</td><td>$${t.earnings?.USD ?? 0}</td></tr>
-  `).join('') || '<tr><td colspan="4" style="color:#64748b">No data</td></tr>';
+    await loadNumbers(); 
+  }, 10000);
 }
 
 async function loadNumbers() {
-  const rn = document.getElementById('rangeFilter').value;
-  const q = new URLSearchParams({ per_page: 100 });
-  if (rn) q.set('range_name', rn);
-  const res = await api('/api/numbers?' + q);
-  renderNumbers(res.data || []);
+  try {
+    const res = await api('/api/numbers');
+    if (res.data) {
+      renderNumbers(res.data);
+    }
+  } catch (e) {}
 }
 
 function renderNumbers(nums) {
-  document.querySelector('#numbersTable tbody').innerHTML = (nums || []).map(n => `
-    <tr><td>${n.number}</td><td>${n.range_name}</td><td>$${n.a2p_rate}</td><td>${n.currency}</td><td>${n.assigned_at || ''}</td></tr>
-  `).join('') || '<tr><td colspan="5" style="color:#64748b">No numbers</td></tr>';
+  const tbody = document.getElementById('numbersTableBody');
+  document.getElementById('numberCount').innerText = nums.length;
+  
+  if (!nums || nums.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="2" class="empty-state">No numbers available. Click "Get Number" to check.</td></tr>`;
+    document.getElementById('getNumberBtn').disabled = true;
+    return;
+  }
+  
+  document.getElementById('getNumberBtn').disabled = false;
+  tbody.innerHTML = nums.map(n => `
+    <tr>
+      <td style="font-weight:600; color:#f8fafc; font-family:monospace; font-size:15px;">${n.number}</td>
+      <td style="color:#94a3b8;">${n.range_name}</td>
+    </tr>
+  `).join('');
 }
 
 async function loadLocalMessages() {
-  const number = document.getElementById('otpNumFilter')?.value || '';
-  const q = document.getElementById('otpQ')?.value || '';
-  const params = new URLSearchParams({ limit: 100 });
-  if (number) params.set('number', number);
-  if (q) params.set('q', q);
-  const res = await api('/api/messages/local?' + params);
-  const rows = (res.data || []).map(m => `
-    <tr>
-      <td>${new Date(m.received_at).toLocaleString()}</td>
-      <td>${m.number}</td>
-      <td>${m.source || ''}</td>
-      <td>${m.otp ? `<span class="otp">${m.otp}</span>` : '-'}</td>
-      <td class="msgtext">${(m.message || '').slice(0, 120)}</td>
-    </tr>
-  `).join('') || '<tr><td colspan="5" style="color:#64748b">No messages</td></tr>';
-  document.querySelector('#otpTable tbody').innerHTML = rows;
-  document.getElementById('otpCount').textContent = res.total ?? 0;
+  try {
+    const res = await api('/api/messages/local?limit=50');
+    renderMessages(res.data || []);
+    document.getElementById('totalOTP').innerText = res.total || 0;
+  } catch (e) {}
 }
 
-async function startPolling() {
-  const r = await api('/api/polling/start', { method: 'POST' });
-  updatePollBadge(r.running);
+function renderMessages(msgs) {
+  const tbody = document.getElementById('otpTableBody');
+  if (!msgs || msgs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No OTPs received yet.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = msgs.map(m => {
+    const otp = m.otp || extractOTP(m.message);
+    return `
+      <tr>
+        <td style="color:#94a3b8; font-size:12px; white-space:nowrap;">${new Date(m.received_at).toLocaleTimeString()}</td>
+        <td style="font-weight:500; font-family:monospace;">${m.number}</td>
+        <td>${otp ? `<span class="otp-highlight">${otp}</span>` : '<span style="color:#64748b;">-</span>'}</td>
+        <td style="color:#cbd5e1; font-size:13px; max-width:350px; word-break:break-word;">${m.message}</td>
+      </tr>
+    `;
+  }).join('');
 }
-async function stopPolling() {
-  const r = await api('/api/polling/stop', { method: 'POST' });
-  updatePollBadge(r.running);
-}
-function updatePollBadge(on) {
-  const b = document.getElementById('pollBadge');
-  const s = document.getElementById('pollStatus');
-  if (b) { b.textContent = 'Polling: ' + (on ? 'on' : 'off'); b.style.color = on ? '#86efac' : '#94a3b8'; }
-  if (s) s.textContent = on ? 'running' : 'stopped';
+
+async function getNumber() {
+  if(!confirm("Are you sure you want to take a number? It will be removed from the list.")) return;
+  
+  const btn = document.getElementById('getNumberBtn');
+  btn.innerText = "Processing...";
+  btn.disabled = true;
+
+  try {
+    const res = await api('/api/numbers/get', { method: 'POST' });
+    if (res.success) {
+      alert(`🎉 Number Selected: ${res.number}\nIt has been removed from your list.`);
+      await loadNumbers(); 
+    } else {
+      alert(res.message || "Failed to get number");
+    }
+  } catch (e) {
+    alert("Error: " + e.message);
+  } finally {
+    btn.innerText = "Get Number";
+    btn.disabled = false;
+  }
 }
 
 async function loadRateInfo() {
   try {
     const r = await api('/api/rate-info');
-    document.getElementById('rateInfo').textContent = `Rate: ${r.remaining}/${r.limit}`;
+    if(r.limit) document.getElementById('rateInfo').innerText = `API Limit: ${r.remaining}/${r.limit}`;
   } catch {}
 }
 
-if (PWD) init();
+init();
 </script>
 </body>
 </html>
