@@ -36,13 +36,17 @@ const wrap = fn => async (req, res) => {
   }
 };
 
-// ১. ইউনিক রেঞ্জ লিস্ট (ড্রপডাউনের জন্য)
-app.get('/api/ranges', (req, res) => {
-  const ranges = dbApi.getUniqueRanges();
+// রেঞ্জ লোড (যদি ডাটাবেস খালি থাকে, তবে iVAS থেকে সাথে সাথে নিয়ে আসবে)
+app.get('/api/ranges', async (req, res) => {
+  let ranges = dbApi.getUniqueRanges();
+  if (ranges.length === 0) {
+    await pollOnce(); // ফোর্স আপডেট
+    ranges = dbApi.getUniqueRanges();
+  }
   res.json({ success: true, data: ranges });
 });
 
-// ২. রেঞ্জ অনুযায়ী নাম্বার নেওয়া (Get Number বাটনের জন্য)
+// নাম্বার নেওয়া
 app.post('/api/numbers/get', (req, res) => {
   try {
     const { range } = req.body;
@@ -60,12 +64,15 @@ app.post('/api/numbers/get', (req, res) => {
   }
 });
 
-// ৩. OTP লিস্ট
+// OTP লিস্ট (কারেন্ট নাম্বার দিয়ে ফিল্টার হবে)
 app.get('/api/messages/local', (req, res) => {
+  const { number } = req.query;
   const limit = Math.min(parseInt(req.query.limit || '50'), 500);
   const offset = parseInt(req.query.offset || '0');
-  const data = dbApi.getMessages({ limit, offset });
-  const total = dbApi.countMessages();
+  
+  const data = dbApi.getMessages({ number, limit, offset });
+  const total = dbApi.countMessages(number);
+  
   res.json({ success: true, data, total, limit, offset });
 });
 
@@ -95,7 +102,6 @@ async function pollOnce() {
       const otp = extractOTP(m.message);
       if (dbApi.saveMessage(m, otp)) newCount++;
     }
-    if (newCount) cache.flushAll();
   } catch (e) {
     console.error('[poll error]', e.message);
   } finally {
