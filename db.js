@@ -3,16 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-// Render-এ absolute path ব্যবহার করা বাধ্যতামূলক
 const dbPath = process.env.DB_PATH || path.join(__dirname, 'data', 'ivas.db');
 const dirPath = path.dirname(dbPath);
 
 if (!fs.existsSync(dirPath)) {
   fs.mkdirSync(dirPath, { recursive: true });
-  console.log(`📁 Created DB directory: ${dirPath}`);
 }
-
-console.log(`💾 DB path: ${dbPath}`);
 
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
@@ -33,10 +29,6 @@ db.exec(`
     received_at TEXT,
     created_at INTEGER DEFAULT (strftime('%s','now'))
   );
-  CREATE INDEX IF NOT EXISTS idx_messages_number ON messages(number);
-  CREATE INDEX IF NOT EXISTS idx_messages_received ON messages(received_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_messages_otp ON messages(otp);
-
   CREATE TABLE IF NOT EXISTS numbers_cache (
     number TEXT PRIMARY KEY,
     range_name TEXT,
@@ -112,18 +104,8 @@ function getCachedNumbers() {
   return db.prepare('SELECT * FROM numbers_cache ORDER BY range_name, number').all();
 }
 
-function getDailyStats(days = 30) {
-  const since = new Date(Date.now() - days * 86400000).toISOString();
-  return db.prepare(`
-    SELECT substr(received_at,1,10) AS day,
-           COUNT(*) AS messages,
-           SUM(CASE WHEN type='a2p' THEN 1 ELSE 0 END) AS a2p,
-           SUM(CASE WHEN type='p2p' THEN 1 ELSE 0 END) AS p2p,
-           SUM(rate) AS earnings
-    FROM messages
-    WHERE received_at >= ?
-    GROUP BY day ORDER BY day ASC
-  `).all(since);
+function deleteNumber(num) {
+  return db.prepare('DELETE FROM numbers_cache WHERE number = ?').run(num);
 }
 
 function getOtpStats() {
@@ -135,5 +117,5 @@ function getOtpStats() {
 
 module.exports = {
   db, saveMessage, getMessages, countMessages, getLatestOTP,
-  saveNumbers, getCachedNumbers, getDailyStats, getOtpStats,
+  saveNumbers, getCachedNumbers, deleteNumber, getOtpStats,
 };
