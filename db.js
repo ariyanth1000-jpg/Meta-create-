@@ -37,6 +37,10 @@ db.exec(`
     assigned_at TEXT,
     updated_at INTEGER DEFAULT (strftime('%s','now'))
   );
+  CREATE TABLE IF NOT EXISTS deleted_numbers (
+    number TEXT PRIMARY KEY,
+    deleted_at INTEGER DEFAULT (strftime('%s','now'))
+  );
 `);
 
 function saveMessage(m, otp) {
@@ -85,6 +89,7 @@ function getLatestOTP(number) {
   return db.prepare(`SELECT * FROM messages WHERE otp IS NOT NULL ORDER BY received_at DESC LIMIT 1`).get();
 }
 
+// Polling থেকে ডাটা সেভ করার সময় চেক করবে নম্বরটি ডিলিট করা হয়েছে কিনা
 function saveNumbers(nums) {
   const stmt = db.prepare(`
     INSERT INTO numbers_cache (number, range_name, a2p_rate, currency, assigned_at, updated_at)
@@ -94,9 +99,17 @@ function saveNumbers(nums) {
       currency=excluded.currency, assigned_at=excluded.assigned_at,
       updated_at=strftime('%s','now')
   `);
-  const tx = db.transaction(list => list.forEach(n =>
-    stmt.run(n.number, n.range_name, n.a2p_rate, n.currency, n.assigned_at)
-  ));
+  
+  const checkDeleted = db.prepare('SELECT number FROM deleted_numbers WHERE number = ?');
+  
+  const tx = db.transaction(list => {
+    list.forEach(n => {
+      // যদি নম্বরটি ডিলিট লিস্টে থাকে, তবে আর সেভ করবে না
+      if (!checkDeleted.get(n.number)) {
+        stmt.run(n.number, n.range_name, n.a2p_rate, n.currency, n.assigned_at);
+      }
+    });
+  });
   tx(nums);
 }
 
@@ -105,14 +118,16 @@ function getCachedNumbers() {
 }
 
 function deleteNumber(num) {
+  // ১. ডিলিট লিস্টে যোগ করবে
+  db.prepare('INSERT OR IGNORE INTO deleted_numbers (number) VALUES (?)').run(num);
+  // ২. ক্যাশ থেকে মুছে দেবে
   return db.prepare('DELETE FROM numbers_cache WHERE number = ?').run(num);
 }
 
 function getOtpStats() {
   const total = db.prepare('SELECT COUNT(*) c FROM messages').get().c;
   const withOtp = db.prepare('SELECT COUNT(*) c FROM messages WHERE otp IS NOT NULL').get().c;
-  const last24 = db.prepare(`SELECT COUNT(*) c FROM messages WHERE created_at > strftime('%s','now') - 86400`).get().c;
-  return { total, withOtp, last24 };
+  return { total, withOtp };
 }
 
 module.exports = {
