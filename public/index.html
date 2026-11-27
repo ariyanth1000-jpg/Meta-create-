@@ -11,130 +11,112 @@
   body{margin:0; background:#0f172a; color:#e2e8f0; min-height:100vh;}
   
   /* Header */
-  header{padding:20px 24px; background:#1e293b; display:flex; justify-content:center; align-items:center; border-bottom:1px solid #334155; position:sticky; top:0; z-index:10;}
-  header h1{margin:0; font-size:24px; color:#f8fafc; font-weight:700; letter-spacing:1px;}
+  header{padding:16px 24px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; position:sticky; top:0; z-index:10;}
+  header h1{margin:0; font-size:22px; color:#f8fafc; font-weight:700; letter-spacing:1px;}
+  
+  /* Corner OTP Badge */
+  .corner-badge {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid #10b981;
+    color: #10b981;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   
   .container{padding:24px; display:grid; gap:24px; max-width:1200px; margin:0 auto;}
   
-  /* Cards */
-  .cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:20px;}
-  .card{background:#1e293b; padding:24px; border-radius:12px; border:1px solid #334155; text-align:center; transition:transform 0.2s; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
-  .card:hover{transform:translateY(-2px); border-color:#3b82f6;}
-  .card .label{font-size:13px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; font-weight:600;}
-  .card .value{font-size:36px; font-weight:700; margin-top:12px; color:#10b981;}
-  
   /* Panels */
   .panel{background:#1e293b; border-radius:12px; border:1px solid #334155; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
-  .panel-header{padding:16px 20px; background:#0f172a; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
+  .panel-header{padding:16px 20px; background:#0f172a; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;}
   .panel-header h2{margin:0; font-size:16px; font-weight:600; color:#f8fafc; display:flex; align-items:center; gap:8px;}
   
-  .search-box { padding:8px 12px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff; font-size:13px; outline:none; width:200px; }
-  .search-box:focus { border-color:#3b82f6; }
+  /* Form controls */
+  .select-box { padding:10px 14px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff; font-size:14px; outline:none; min-width:220px; cursor:pointer;}
+  .select-box:focus { border-color:#3b82f6; }
 
-  .btn{padding:10px 18px; border-radius:8px; border:none; background:#3b82f6; color:#fff; cursor:pointer; font-size:14px; font-weight:600; transition:background 0.2s;}
+  .btn{padding:10px 20px; border-radius:8px; border:none; background:#3b82f6; color:#fff; cursor:pointer; font-size:14px; font-weight:600; transition:background 0.2s;}
   .btn:hover{background:#2563eb;}
   .btn:disabled{background:#475569; cursor:not-allowed; opacity:0.7;}
   
   /* Tables */
   table{width:100%; border-collapse:collapse; font-size:14px; table-layout: fixed;}
-  th,td{text-align:left; padding:14px 20px; border-bottom:1px solid #334155;}
+  th,td{text-align:left; padding:12px 20px; border-bottom:1px solid #334155;}
   th{color:#94a3b8; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;}
   tr:last-child td{border-bottom:none;}
   tr:hover td{background:#1e293b;}
   
-  /* OTP Highlight */
-  .otp-highlight{background:#10b981; color:#fff; padding:6px 12px; border-radius:6px; font-family:monospace; font-size:18px; font-weight:700; display:inline-block; letter-spacing:2px; box-shadow:0 2px 8px rgba(16,185,129,0.4);}
-  .empty-state{padding:30px; text-align:center; color:#64748b; font-size:14px;}
-  
-  /* Single line message */
-  .msg-text {
+  /* Single line scrollable message */
+  .msg-scroll {
     color: #cbd5e1;
     font-size: 13px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-x: auto;
+    overflow-y: hidden;
     display: block;
     width: 100%;
+    scrollbar-width: thin; /* Firefox */
   }
-  
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: #0f172a; }
-  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  .msg-scroll::-webkit-scrollbar { height: 4px; }
+  .msg-scroll::-webkit-scrollbar-track { background: transparent; }
+  .msg-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+  .msg-scroll:hover::-webkit-scrollbar-thumb { background: #64748b; }
 
-  .badge-live { font-size:12px; color:#10b981; display:flex; align-items:center; gap:6px; font-weight:600; }
-  .dot-pulse { width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block; animation:pulse 2s infinite; }
+  .empty-state{padding:30px; text-align:center; color:#64748b; font-size:14px;}
 </style>
 </head>
 <body>
 
 <header>
   <h1>Tamim Panel</h1>
+  <div class="corner-badge">
+    📩 <span id="totalOTP">0</span> OTP Received
+  </div>
 </header>
 
 <div class="container">
 
-  <!-- 1. MY NUMBERS + SEARCH BAR -->
+  <!-- 1. GET NUMBER BY RANGE PANEL -->
   <div class="panel">
     <div class="panel-header">
-      <h2>📱 My Numbers <span id="numberCount" style="color:#3b82f6; margin-left:8px; background:rgba(59,130,246,0.1); padding:2px 8px; border-radius:12px;">0</span></h2>
+      <h2>📱 Get Number by Range</h2>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <input type="text" id="rangeSearch" class="search-box" placeholder="Search by Range..." oninput="loadNumbers()">
+        <select id="rangeDropdown" class="select-box">
+          <option value="">Loading ranges...</option>
+        </select>
         <button class="btn" id="getNumberBtn" onclick="getNumber()">Get Number</button>
       </div>
     </div>
-    <div style="max-height:300px; overflow-y:auto;">
+  </div>
+
+  <!-- 2. LATEST OTP LIST PANEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2>⚡ Latest OTPs</h2>
+      <span style="font-size:12px; color:#10b981; font-weight:600; display:flex; align-items:center; gap:6px;">
+        <span style="width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block;"></span> Live
+      </span>
+    </div>
+    <div style="max-height:500px; overflow-y:auto;">
       <table>
         <thead>
-          <tr><th style="width: 50%;">Number</th><th style="width: 50%;">Range</th></tr>
+          <tr>
+            <th style="width: 30%;">Number</th>
+            <th style="width: 70%;">Message</th>
+          </tr>
         </thead>
-        <tbody id="numbersTableBody">
+        <tbody id="otpTableBody">
           <tr><td colspan="2" class="empty-state">Loading data...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- 2. TOTAL OTP CARD -->
-  <div class="cards">
-    <div class="card">
-      <div class="label">Total OTP Received</div>
-      <div class="value" id="totalOTP">0</div>
-    </div>
-  </div>
-
-  <!-- 3. LATEST OTP LIST -->
-  <div class="panel">
-    <div class="panel-header">
-      <h2>⚡ Latest OTPs</h2>
-      <span class="badge-live"><span class="dot-pulse"></span> Live</span>
-    </div>
-    <div style="max-height:400px; overflow-y:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 15%;">Time</th>
-            <th style="width: 20%;">Number</th>
-            <th style="width: 20%;">OTP Code</th>
-            <th style="width: 45%;">Message</th>
-          </tr>
-        </thead>
-        <tbody id="otpTableBody">
-          <tr><td colspan="4" class="empty-state">Loading data...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
 </div>
-
-<style>
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-</style>
 
 <script>
 async function api(path, opts = {}) {
@@ -145,54 +127,46 @@ async function api(path, opts = {}) {
   return res.json();
 }
 
-function extractOTP(text) {
-  if (!text) return null;
-  const ps = [/\b(\d{4,8})\b.{0,30}(?:code|otp|verification|pin)/i, /(?:code|otp|verification|pin)[^\d]{0,15}(\d{4,8})\b/i, /\b(\d{6})\b/, /\b(\d{4,8})\b/];
-  for (const p of ps) { const m = text.match(p); if (m) return m[1]; }
-  return null;
-}
-
 async function init() {
-  await loadNumbers();
+  await loadRanges();
   await loadLocalMessages();
   
+  // প্রতি ১০ সেকেন্ডে ডাটা অটো আপডেট হবে
   setInterval(async () => {
     await loadLocalMessages();
-    await loadNumbers(); 
+    await loadRanges(); // নতুন নাম্বার এলে রেঞ্জও আপডেট হবে
   }, 10000);
 }
 
-async function loadNumbers() {
+// Dropdown-এ রেঞ্জ লোড করা
+async function loadRanges() {
   try {
-    const range = document.getElementById('rangeSearch').value;
-    const url = '/api/numbers/local' + (range ? `?range_name=${encodeURIComponent(range)}` : '');
-    const res = await api(url);
-    if (res.data) {
-      renderNumbers(res.data);
+    const res = await api('/api/ranges');
+    const dropdown = document.getElementById('rangeDropdown');
+    const currentVal = dropdown.value;
+    
+    if (!res.data || res.data.length === 0) {
+      dropdown.innerHTML = `<option value="">No ranges available</option>`;
+      return;
+    }
+    
+    let options = `<option value="">Select Range...</option>`;
+    res.data.forEach(r => {
+      options += `<option value="${r}">${r}</option>`;
+    });
+    dropdown.innerHTML = options;
+    
+    // আগের সিলেক্ট করা রেঞ্জটা আবার সিলেক্ট করে রাখবে
+    if (currentVal && res.data.includes(currentVal)) {
+      dropdown.value = currentVal;
     }
   } catch (e) {}
 }
 
-function renderNumbers(nums) {
-  const tbody = document.getElementById('numbersTableBody');
-  document.getElementById('numberCount').innerText = nums.length;
-  
-  if (!nums || nums.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="2" class="empty-state">No numbers found matching your search.</td></tr>`;
-    return;
-  }
-  
-  tbody.innerHTML = nums.map(n => `
-    <tr>
-      <td style="font-weight:600; color:#f8fafc; font-family:monospace; font-size:15px;">${n.number}</td>
-      <td style="color:#94a3b8;">${n.range_name}</td>
-    </tr>
-  `).join('');
-}
-
+// OTP লিস্ট লোড করা
 async function loadLocalMessages() {
   try {
-    const res = await api('/api/messages/local?limit=50');
+    const res = await api('/api/messages/local?limit=100');
     renderMessages(res.data || []);
     document.getElementById('totalOTP').innerText = res.total || 0;
   } catch (e) {}
@@ -201,32 +175,41 @@ async function loadLocalMessages() {
 function renderMessages(msgs) {
   const tbody = document.getElementById('otpTableBody');
   if (!msgs || msgs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No OTPs received yet.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="2" class="empty-state">No OTPs received yet.</td></tr>`;
     return;
   }
   
   tbody.innerHTML = msgs.map(m => {
-    const otp = m.otp || extractOTP(m.message);
     return `
       <tr>
-        <td style="color:#94a3b8; font-size:12px; white-space:nowrap;">${new Date(m.received_at).toLocaleTimeString()}</td>
-        <td style="font-weight:500; font-family:monospace;">${m.number}</td>
-        <td>${otp ? `<span class="otp-highlight">${otp}</span>` : '<span style="color:#64748b;">-</span>'}</td>
-        <td><span class="msg-text" title="${m.message}">${m.message}</span></td>
+        <td style="font-weight:500; font-family:monospace; font-size:15px; color:#f8fafc;">${m.number}</td>
+        <td>
+          <span class="msg-scroll" title="${m.message}">${m.message}</span>
+        </td>
       </tr>
     `;
   }).join('');
 }
 
+// Get Number বাটনের কাজ
 async function getNumber() {
-  if(!confirm("Are you sure you want to take a number? It will be removed from the list.")) return;
+  const range = document.getElementById('rangeDropdown').value;
+  
+  if (!range) {
+    alert("Please select a Range first!");
+    return;
+  }
   
   const btn = document.getElementById('getNumberBtn');
   btn.innerText = "Processing...";
   btn.disabled = true;
 
   try {
-    const res = await api('/api/numbers/get', { method: 'POST' });
+    const res = await api('/api/numbers/get', { 
+      method: 'POST',
+      body: JSON.stringify({ range })
+    });
+    
     if (res.success) {
       // অটোমেটিক কপি করার সিস্টেম
       navigator.clipboard.writeText(res.number).then(() => {
@@ -235,7 +218,7 @@ async function getNumber() {
         alert(`🎉 Number Selected: ${res.number}\n(Could not copy automatically)`);
       });
       
-      await loadNumbers(); 
+      await loadRanges(); // লিস্ট আপডেট হবে
     } else {
       alert(res.message || "Failed to get number");
     }
