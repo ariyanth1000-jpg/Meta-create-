@@ -7,118 +7,125 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
   
-  *{box-sizing:border-box; font-family:'Inter', sans-serif;}
+  *{box-sizing:border-box; font-family:'Inter', sans-serif; -webkit-tap-highlight-color: transparent;}
   body{margin:0; background:#0f172a; color:#e2e8f0; min-height:100vh;}
   
   /* Header */
-  header{padding:16px 24px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; position:sticky; top:0; z-index:10;}
+  header{padding:16px 20px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; position:sticky; top:0; z-index:10;}
   header h1{margin:0; font-size:22px; color:#f8fafc; font-weight:700; letter-spacing:1px;}
   
-  /* Corner OTP Badge */
-  .corner-badge {
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid #10b981;
-    color: #10b981;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .badge {
+    background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981;
+    padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;
   }
   
-  .container{padding:24px; display:grid; gap:24px; max-width:1200px; margin:0 auto;}
+  .container{padding:20px; display:flex; flex-direction:column; gap:20px; max-width:800px; margin:0 auto;}
   
-  /* Panels */
-  .panel{background:#1e293b; border-radius:12px; border:1px solid #334155; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.1);}
-  .panel-header{padding:16px 20px; background:#0f172a; border-bottom:1px solid #334155; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;}
-  .panel-header h2{margin:0; font-size:16px; font-weight:600; color:#f8fafc; display:flex; align-items:center; gap:8px;}
+  /* Control Panel */
+  .control-panel{background:#1e293b; padding:20px; border-radius:12px; border:1px solid #334155; display:flex; flex-direction:column; gap:12px;}
+  .control-panel h2{margin:0 0 10px 0; font-size:16px; color:#f8fafc; text-align:center;}
   
-  /* Form controls */
-  .select-box { padding:10px 14px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#fff; font-size:14px; outline:none; min-width:220px; cursor:pointer;}
+  .select-box { 
+    width: 100%; padding:14px; border-radius:8px; border:1px solid #334155; 
+    background:#0f172a; color:#fff; font-size:16px; outline:none; cursor:pointer;
+    text-align: center; -webkit-appearance: none; appearance: none;
+  }
   .select-box:focus { border-color:#3b82f6; }
-
-  .btn{padding:10px 20px; border-radius:8px; border:none; background:#3b82f6; color:#fff; cursor:pointer; font-size:14px; font-weight:600; transition:background 0.2s;}
+  
+  .btn{
+    width: 100%; padding:14px; border-radius:8px; border:none; background:#3b82f6; 
+    color:#fff; cursor:pointer; font-size:16px; font-weight:600; transition:background 0.2s;
+    text-align: center;
+  }
   .btn:hover{background:#2563eb;}
   .btn:disabled{background:#475569; cursor:not-allowed; opacity:0.7;}
-  
-  /* Tables */
-  table{width:100%; border-collapse:collapse; font-size:14px; table-layout: fixed;}
-  th,td{text-align:left; padding:12px 20px; border-bottom:1px solid #334155;}
-  th{color:#94a3b8; font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;}
-  tr:last-child td{border-bottom:none;}
-  tr:hover td{background:#1e293b;}
-  
-  /* Single line scrollable message */
-  .msg-scroll {
-    color: #cbd5e1;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    display: block;
-    width: 100%;
-    scrollbar-width: thin; /* Firefox */
-  }
-  .msg-scroll::-webkit-scrollbar { height: 4px; }
-  .msg-scroll::-webkit-scrollbar-track { background: transparent; }
-  .msg-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
-  .msg-scroll:hover::-webkit-scrollbar-thumb { background: #64748b; }
 
-  .empty-state{padding:30px; text-align:center; color:#64748b; font-size:14px;}
+  /* Current Number Box */
+  .current-box {
+    background: #1e293b; border: 1px dashed #3b82f6; padding: 15px; border-radius: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .current-box .num { font-size: 18px; font-weight: 700; color: #3b82f6; font-family: monospace; letter-spacing: 1px;}
+  .clear-btn { background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;}
+  
+  /* Inbox Section */
+  .inbox-header { text-align: center; margin: 10px 0 0 0; }
+  .inbox-header h2 { font-size: 20px; color: #f8fafc; margin: 0; font-weight: 700; letter-spacing: 1px;}
+  
+  .inbox-list { display: flex; flex-direction: column; gap: 12px;}
+  
+  .msg-card {
+    background: #1e293b; border-radius: 10px; padding: 15px; border: 1px solid #334155;
+    cursor: pointer; transition: 0.2s; position: relative;
+  }
+  .msg-card:hover { border-color: #10b981; background: #1e293b; }
+  .msg-card:active { transform: scale(0.98); }
+  
+  .msg-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
+  .msg-time { font-size: 11px; color: #94a3b8; }
+  .msg-platform { font-size: 11px; background: #0f172a; padding: 3px 8px; border-radius: 4px; color: #cbd5e1;}
+  
+  .msg-number { font-size: 15px; font-weight: 700; color: #f8fafc; font-family: monospace; margin-bottom: 6px;}
+  .msg-body { font-size: 13px; color: #cbd5e1; line-height: 1.5; word-break: break-word;}
+  
+  .otp-badge { display: inline-block; background: #10b981; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-family: monospace; font-size: 14px;}
+
+  .empty-state{ text-align:center; padding: 40px 20px; color: #64748b; font-size: 14px; background:#1e293b; border-radius:10px; border:1px solid #334155;}
+  
+  /* Copy Toast */
+  #toast {
+    visibility: hidden; min-width: 250px; background-color: #10b981; color: #fff;
+    text-align: center; border-radius: 8px; padding: 12px; position: fixed;
+    z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%);
+    font-size: 14px; font-weight: 600; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+  }
+  #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Tamim Panel</h1>
-  <div class="corner-badge">
-    📩 <span id="totalOTP">0</span> OTP Received
+  <div class="badge">
+    📩 <span id="totalOTP">0</span>
   </div>
 </header>
 
 <div class="container">
 
-  <!-- 1. GET NUMBER BY RANGE PANEL -->
-  <div class="panel">
-    <div class="panel-header">
-      <h2>📱 Get Number by Range</h2>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <select id="rangeDropdown" class="select-box">
-          <option value="">Loading ranges...</option>
-        </select>
-        <button class="btn" id="getNumberBtn" onclick="getNumber()">Get Number</button>
-      </div>
-    </div>
+  <!-- Control Panel -->
+  <div class="control-panel">
+    <h2>Get Number by Range</h2>
+    <select id="rangeDropdown" class="select-box">
+      <option value="">Loading ranges...</option>
+    </select>
+    <button class="btn" id="getNumberBtn" onclick="getNumber()">Get Number</button>
   </div>
 
-  <!-- 2. LATEST OTP LIST PANEL -->
-  <div class="panel">
-    <div class="panel-header">
-      <h2>⚡ Latest OTPs</h2>
-      <span style="font-size:12px; color:#10b981; font-weight:600; display:flex; align-items:center; gap:6px;">
-        <span style="width:8px; height:8px; background:#10b981; border-radius:50%; display:inline-block;"></span> Live
-      </span>
-    </div>
-    <div style="max-height:500px; overflow-y:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 30%;">Number</th>
-            <th style="width: 70%;">Message</th>
-          </tr>
-        </thead>
-        <tbody id="otpTableBody">
-          <tr><td colspan="2" class="empty-state">Loading data...</td></tr>
-        </tbody>
-      </table>
-    </div>
+  <!-- Current Number Box (Hidden initially) -->
+  <div class="current-box" id="currentNumberBox" style="display: none;">
+    <div>Current: <span class="num" id="currentNumberText">-</span></div>
+    <button class="clear-btn" onclick="clearCurrentNumber()">Clear</button>
+  </div>
+
+  <!-- Inbox -->
+  <div class="inbox-header">
+    <h2>Inbox</h2>
+  </div>
+  
+  <div class="inbox-list" id="inboxList">
+    <div class="empty-state">Loading messages...</div>
   </div>
 
 </div>
 
+<!-- Toast for copy notification -->
+<div id="toast">✅ OTP Copied to Clipboard!</div>
+
 <script>
+let currentNumber = "";
+let refreshInterval = null;
+
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     ...opts,
@@ -127,23 +134,27 @@ async function api(path, opts = {}) {
   return res.json();
 }
 
-async function init() {
-  await loadRanges();
-  await loadLocalMessages();
-  
-  // প্রতি ১০ সেকেন্ডে ডাটা অটো আপডেট হবে
-  setInterval(async () => {
-    await loadLocalMessages();
-    await loadRanges(); // নতুন নাম্বার এলে রেঞ্জও আপডেট হবে
-  }, 10000);
+function extractOTP(text) {
+  if (!text) return null;
+  const ps = [/\b(\d{4,8})\b.{0,30}(?:code|otp|verification|pin)/i, /(?:code|otp|verification|pin)[^\d]{0,15}(\d{4,8})\b/i, /\b(\d{6})\b/, /\b(\d{4,8})\b/];
+  for (const p of ps) { const m = text.match(p); if (m) return m[1]; }
+  return null;
 }
 
-// Dropdown-এ রেঞ্জ লোড করা
+async function init() {
+  await loadRanges();
+  await loadInbox();
+  
+  if (refreshInterval) clearInterval(refreshInterval);
+  refreshInterval = setInterval(async () => {
+    await loadInbox();
+  }, 5000); // প্রতি ৫ সেকেন্ডে ইনবক্স আপডেট হবে
+}
+
 async function loadRanges() {
   try {
     const res = await api('/api/ranges');
     const dropdown = document.getElementById('rangeDropdown');
-    const currentVal = dropdown.value;
     
     if (!res.data || res.data.length === 0) {
       dropdown.innerHTML = `<option value="">No ranges available</option>`;
@@ -155,72 +166,50 @@ async function loadRanges() {
       options += `<option value="${r}">${r}</option>`;
     });
     dropdown.innerHTML = options;
-    
-    // আগের সিলেক্ট করা রেঞ্জটা আবার সিলেক্ট করে রাখবে
-    if (currentVal && res.data.includes(currentVal)) {
-      dropdown.value = currentVal;
-    }
-  } catch (e) {}
-}
-
-// OTP লিস্ট লোড করা
-async function loadLocalMessages() {
-  try {
-    const res = await api('/api/messages/local?limit=100');
-    renderMessages(res.data || []);
-    document.getElementById('totalOTP').innerText = res.total || 0;
-  } catch (e) {}
-}
-
-function renderMessages(msgs) {
-  const tbody = document.getElementById('otpTableBody');
-  if (!msgs || msgs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="2" class="empty-state">No OTPs received yet.</td></tr>`;
-    return;
+  } catch (e) {
+    document.getElementById('rangeDropdown').innerHTML = `<option value="">Error loading</option>`;
   }
-  
-  tbody.innerHTML = msgs.map(m => {
-    return `
-      <tr>
-        <td style="font-weight:500; font-family:monospace; font-size:15px; color:#f8fafc;">${m.number}</td>
-        <td>
-          <span class="msg-scroll" title="${m.message}">${m.message}</span>
-        </td>
-      </tr>
-    `;
-  }).join('');
+}
+
+// Current Number সেট করা
+function setCurrentNumber(num) {
+  currentNumber = num;
+  document.getElementById('currentNumberText').innerText = num;
+  document.getElementById('currentNumberBox').style.display = 'flex';
+  loadInbox(); // নতুন নাম্বার ফিল্টার করে ইনবক্স লোড করবে
+}
+
+function clearCurrentNumber() {
+  currentNumber = "";
+  document.getElementById('currentNumberBox').style.display = 'none';
+  loadInbox(); // সব নাম্বারের ইনবক্স দেখাবে
 }
 
 // Get Number বাটনের কাজ
 async function getNumber() {
   const range = document.getElementById('rangeDropdown').value;
-  
-  if (!range) {
-    alert("Please select a Range first!");
-    return;
-  }
+  if (!range) return alert("Please select a Range first!");
   
   const btn = document.getElementById('getNumberBtn');
-  btn.innerText = "Processing...";
+  btn.innerText = "Getting...";
   btn.disabled = true;
 
   try {
     const res = await api('/api/numbers/get', { 
-      method: 'POST',
-      body: JSON.stringify({ range })
+      method: 'POST', body: JSON.stringify({ range })
     });
     
     if (res.success) {
-      // অটোমেটিক কপি করার সিস্টেম
-      navigator.clipboard.writeText(res.number).then(() => {
-        alert(`🎉 Number Copied: ${res.number}\nIt has been removed from the list.`);
-      }).catch(() => {
-        alert(`🎉 Number Selected: ${res.number}\n(Could not copy automatically)`);
-      });
+      // কপি করা
+      navigator.clipboard.writeText(res.number);
+      // বক্সে দেখানো
+      setCurrentNumber(res.number);
+      // মেসেজ দেখানো
+      showToast(`Number ${res.number} Selected!`);
       
-      await loadRanges(); // লিস্ট আপডেট হবে
+      await loadRanges(); // ড্রপডাউন আপডেট
     } else {
-      alert(res.message || "Failed to get number");
+      alert(res.message || "Failed");
     }
   } catch (e) {
     alert("Error: " + e.message);
@@ -228,6 +217,67 @@ async function getNumber() {
     btn.innerText = "Get Number";
     btn.disabled = false;
   }
+}
+
+// Inbox লোড করা
+async function loadInbox() {
+  try {
+    let url = '/api/messages/local?limit=100';
+    if (currentNumber) url += `&number=${currentNumber}`;
+    
+    const res = await api(url);
+    renderInbox(res.data || [], res.total || 0);
+  } catch (e) {}
+}
+
+function renderInbox(msgs, totalCount) {
+  document.getElementById('totalOTP').innerText = totalCount;
+  const list = document.getElementById('inboxList');
+  
+  if (!msgs || msgs.length === 0) {
+    list.innerHTML = `<div class="empty-state">No messages found.</div>`;
+    return;
+  }
+  
+  list.innerHTML = msgs.map(m => {
+    const otp = m.otp || extractOTP(m.message);
+    // মেসেজের ভেতরে OTP টা হাইলাইট করার জন্য
+    let displayMsg = m.message;
+    if (otp) {
+      displayMsg = displayMsg.replace(otp, `<span class="otp-badge">${otp}</span>`);
+    }
+    
+    // তারিখ ও সময় সুন্দর করে দেখানো
+    const dateObj = new Date(m.received_at);
+    const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    return `
+      <div class="msg-card" onclick="copyOTP('${otp || ''}', '${m.message.replace(/'/g, "\\'")}')">
+        <div class="msg-top">
+          <span class="msg-time">${timeStr}</span>
+          <span class="msg-platform">${m.source || 'Unknown'}</span>
+        </div>
+        <div class="msg-number">${m.number}</div>
+        <div class="msg-body">${displayMsg}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// OTP কপি করার ফাংশন
+function copyOTP(otp, fullMsg) {
+  const textToCopy = otp ? otp : fullMsg;
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    showToast(otp ? `OTP (${otp}) Copied!` : `Message Copied!`);
+  });
+}
+
+// টোস্ট মেসেজ দেখানোর ফাংশন
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.innerText = msg;
+  toast.className = "show";
+  setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
 }
 
 init();
