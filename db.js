@@ -62,34 +62,23 @@ function saveMessage(m, otp) {
   return r.changes > 0;
 }
 
-function getMessages({ number, q, from, to, limit = 100, offset = 0 } = {}) {
+// ফিল্টার সহ মেসেজ লোড করা
+function getMessages({ number, limit = 100, offset = 0 } = {}) {
   let sql = 'SELECT * FROM messages WHERE 1=1';
   const params = [];
   if (number) { sql += ' AND number = ?'; params.push(number); }
-  if (q) { sql += ' AND (message LIKE ? OR source LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
-  if (from) { sql += ' AND received_at >= ?'; params.push(from); }
-  if (to) { sql += ' AND received_at <= ?'; params.push(to); }
   sql += ' ORDER BY received_at DESC LIMIT ? OFFSET ?';
   params.push(limit, offset);
   return db.prepare(sql).all(...params);
 }
 
-function countMessages(filters = {}) {
-  let sql = 'SELECT COUNT(*) c FROM messages WHERE 1=1';
-  const params = [];
-  if (filters.number) { sql += ' AND number = ?'; params.push(filters.number); }
-  if (filters.q) { sql += ' AND message LIKE ?'; params.push(`%${filters.q}%`); }
-  return db.prepare(sql).get(...params).c;
-}
-
-function getLatestOTP(number) {
+function countMessages(number = null) {
   if (number) {
-    return db.prepare(`SELECT * FROM messages WHERE number = ? AND otp IS NOT NULL ORDER BY received_at DESC LIMIT 1`).get(number);
+    return db.prepare('SELECT COUNT(*) c FROM messages WHERE number = ?').get(number).c;
   }
-  return db.prepare(`SELECT * FROM messages WHERE otp IS NOT NULL ORDER BY received_at DESC LIMIT 1`).get();
+  return db.prepare('SELECT COUNT(*) c FROM messages').get().c;
 }
 
-// Polling থেকে ডাটা সেভ করার সময় চেক করবে নম্বরটি ডিলিট করা হয়েছে কিনা
 function saveNumbers(nums) {
   const stmt = db.prepare(`
     INSERT INTO numbers_cache (number, range_name, a2p_rate, currency, assigned_at, updated_at)
@@ -99,12 +88,10 @@ function saveNumbers(nums) {
       currency=excluded.currency, assigned_at=excluded.assigned_at,
       updated_at=strftime('%s','now')
   `);
-  
   const checkDeleted = db.prepare('SELECT number FROM deleted_numbers WHERE number = ?');
   
   const tx = db.transaction(list => {
     list.forEach(n => {
-      // যদি নম্বরটি ডিলিট লিস্টে থাকে, তবে আর সেভ করবে না
       if (!checkDeleted.get(n.number)) {
         stmt.run(n.number, n.range_name, n.a2p_rate, n.currency, n.assigned_at);
       }
@@ -113,24 +100,20 @@ function saveNumbers(nums) {
   tx(nums);
 }
 
-function getCachedNumbers() {
-  return db.prepare('SELECT * FROM numbers_cache ORDER BY range_name, number').all();
+function getUniqueRanges() {
+  return db.prepare('SELECT DISTINCT range_name FROM numbers_cache WHERE range_name IS NOT NULL').all().map(r => r.range_name);
+}
+
+function getNumberByRange(range_name) {
+  return db.prepare('SELECT * FROM numbers_cache WHERE range_name = ? LIMIT 1').get(range_name);
 }
 
 function deleteNumber(num) {
-  // ১. ডিলিট লিস্টে যোগ করবে
   db.prepare('INSERT OR IGNORE INTO deleted_numbers (number) VALUES (?)').run(num);
-  // ২. ক্যাশ থেকে মুছে দেবে
   return db.prepare('DELETE FROM numbers_cache WHERE number = ?').run(num);
 }
 
-function getOtpStats() {
-  const total = db.prepare('SELECT COUNT(*) c FROM messages').get().c;
-  const withOtp = db.prepare('SELECT COUNT(*) c FROM messages WHERE otp IS NOT NULL').get().c;
-  return { total, withOtp };
-}
-
 module.exports = {
-  db, saveMessage, getMessages, countMessages, getLatestOTP,
-  saveNumbers, getCachedNumbers, deleteNumber, getOtpStats,
+  db, saveMessage, getMessages, countMessages,
+  saveNumbers, getUniqueRanges, getNumberByRange, deleteNumber,
 };
